@@ -1,0 +1,27 @@
+# Devin — lokální konfigurace (obsahuje tajné údaje, gitignored)
+.devin/mcp_config.local.json
+
+# Windsurf — DB připojení (obsahuje údaje, gitignored)
+.mcp-db.json
+
+# Docker — lokální data
+docker-data/
+
+# Backend
+backend/vendor/
+backend/.env
+backend/storage/logs/*
+backend/storage/cache/*
+backend/storage/backups/*
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~

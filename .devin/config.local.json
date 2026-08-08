@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Exec(git status)",
+      "Exec(git commit)",
+      "Exec(git add)",
+      "Exec(git config)",
+      "Exec(git log)",
+      "Exec(git push)",
+      "Exec(git diff)",
+      "Exec(git pull)",
+      "Exec(git checkout)",
+      "Exec(git branch)",
+      "Exec(git merge)",
+      "Exec(git rebase)",
+      "Exec(git stash)",
+      "Exec(git tag)",
+      "Exec(npm run)",
+      "Exec(npx prettier)",
+      "Exec(npx eslint)",
+      "Exec(composer)",
+      "Exec(php)",
+      "Exec(mariadb)",
+      "Exec(mysql)",
+      "Exec(docker)",
+      "Exec(docker compose)",
+      "Exec(curl)",
+      "Exec(jq)",
+      "Exec(make)"
+    ]
+  }
+}
