@@ -67,7 +67,6 @@ jobs:
       - name: npm audit
         working-directory: frontend
         run: npm audit --omit=dev --audit-level=high
-        continue-on-error: true
 
   codeql:
     name: CodeQL Security Scan
