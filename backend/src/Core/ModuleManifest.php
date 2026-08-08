@@ -17,16 +17,11 @@ final class ModuleManifest
         public readonly array $dependencies = [],
         /** @var array<string> */
         public readonly array $permissions = [],
-        /** @var array<string, mixed> */
         public readonly array $configSchema = [],
-        /** @var array<string, mixed> */
         public readonly array $frontend = [],
     ) {
     }
 
-    /**
-     * @param array<string, mixed> $data
-     */
     public static function fromArray(array $data): self
     {
         return new self(

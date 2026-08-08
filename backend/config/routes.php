@@ -14,8 +14,7 @@ return function (App $app): void {
                 'version' => $_ENV['APP_VERSION'] ?? '0.1.0',
                 'timestamp' => gmdate('c'),
             ];
-            $json = json_encode($payload, JSON_PRETTY_PRINT);
-            $response->getBody()->write($json !== false ? $json : '');
+            $response->getBody()->write(json_encode($payload, JSON_PRETTY_PRINT) ?: '');
 
             return $response
                 ->withHeader('Content-Type', 'application/json')

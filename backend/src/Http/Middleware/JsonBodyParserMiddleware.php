@@ -26,11 +26,10 @@ final class JsonBodyParserMiddleware implements MiddlewareInterface
 
                 if (json_last_error() !== JSON_ERROR_NONE) {
                     $response = (new ResponseFactory())->createResponse(400);
-                    $json = json_encode([
+                    $response->getBody()->write(json_encode([
                         'error' => 'Invalid JSON body',
                         'message' => json_last_error_msg(),
-                    ]);
-                    $response->getBody()->write($json !== false ? $json : '');
+                    ]) ?: '');
 
                     return $response->withHeader('Content-Type', 'application/json');
                 }

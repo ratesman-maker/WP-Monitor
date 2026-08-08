@@ -29,8 +29,7 @@ final class ErrorResponse
             $payload['instance'] = $instance;
         }
 
-        $json = json_encode($payload, JSON_PRETTY_PRINT);
-        $response->getBody()->write($json !== false ? $json : '');
+        $response->getBody()->write(json_encode($payload, JSON_PRETTY_PRINT) ?: '');
 
         return $response->withHeader('Content-Type', 'application/problem+json');
     }

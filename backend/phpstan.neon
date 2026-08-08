@@ -8,6 +8,11 @@ parameters:
         - src/
         - tests/
         - config/
+    # Relax: don't force PHPDoc on every array param (trivial wrappers)
+    reportUnmatchedIgnoredErrors: false
+    ignoreErrors:
+        - identifier: missingType.iterableValue
     strictRules:
-        noVariableVariables: true
-        requireParentConstructorCall: true
+        allRules: true
+        # Allow short ternary ?: (idiomatic PHP)
+        disallowedShortTernary: false

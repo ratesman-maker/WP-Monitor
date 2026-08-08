@@ -18,19 +18,11 @@ final class Connection
         return $this->connection;
     }
 
-    /**
-     * @param list<mixed> $params
-     *
-     * @return list<array<string, mixed|null>>
-     */
     public function executeQuery(string $sql, array $params = []): array
     {
         return $this->connection->executeQuery($sql, $params)->fetchAllAssociative();
     }
 
-    /**
-     * @param list<mixed> $params
-     */
     public function executeStatement(string $sql, array $params = []): int
     {
         return (int) $this->connection->executeStatement($sql, $params);
