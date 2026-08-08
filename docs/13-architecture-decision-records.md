@@ -163,7 +163,7 @@ Použít **Argon2id** (`SODIUM_CRYPTO_PWHASH_ALG_ARGON2ID13`).
 Potřebujeme frontend framework pro admin dashboard s tabulkami, grafy, formuláři a real-time aktualizacemi.
 
 ### Rozhodnutí
-Použít **React 18 + TypeScript 5 + Vite 5**.
+Použít **React 18 + TypeScript 5 + Vite 7**.
 
 ### Důvody
 - React — největší ekosystém, nejvíce knihoven, shadcn/ui

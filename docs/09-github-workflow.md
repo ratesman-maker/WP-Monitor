@@ -51,24 +51,25 @@ A pak máme **pracovní stoly** (dočasné větve), kde se reálně pracuje:
    (PR template se automaticky vloží s kontrolním seznamem)
         ↓
 6. AUTOMATICKÉ KONTROLY (GitHub Actions)
-   ⚙️ Spustí se 14 kontrol automaticky:
+   ⚙️ Spustí se kontroly automaticky:
    ┌─────────────────────────────────────────────┐
    │  📝 Zkontroluje název větve                  │
-   │     (musí být feature/backup-batch)          │
+   │     (musí být feat/backup-batch)             │
    │  📝 Zkontroluje že jsi mířil na develop      │
    │  📝 Zkontroluje titulek PR                   │
    │     (musí být "feat(backups): ...")          │
    │  🏷️  Automaticky přidá štítek "feature"      │
    │                                              │
-   │  🔍 PHP kód je čistý (PSR-12)               │
+   │  🔍 PHP-CS-Fixer: kód je čistý (PSR-12)     │
    │  🔍 PHPStan: žádné chyby v typech           │
-   │  🔍 PHPUnit: testy prošly                   │
+   │  🔍 PHPUnit: testy prošly (17 testů)        │
+   │  🔍 Composer audit: žádné zranitelnosti     │
    │  🔍 ESLint: TypeScript bez chyb             │
    │  🔍 TypeScript: typy jsou správně           │
-   │  🔍 Vitest: frontend testy prošly           │
+   │  🔍 Vitest: frontend testy prošly (21 testů)│
    │  🔍 Build: frontend se zkompiloval          │
-   │  🔍 Composer audit: žádné zranitelnosti     │
-   │  🔍 CodeQL: bezpečnostní scan kódu          │
+   │  🔍 npm audit: žádné zranitelnosti          │
+   │  🔍 CodeQL: bezpečnostní scan (JS/TS)       │
    │  🔍 Commit zprávy: správný formát            │
    └─────────────────────────────────────────────┘
         ↓
@@ -80,7 +81,11 @@ A pak máme **pracovní stoly** (dočasné větve), kde se reálně pracuje:
    Kód se spojí s develop (squash — všechny tvé
    commity se spojí do jednoho čistého)
         ↓
-9. KDYŽ JE ČAS NA VYDÁNÍ...
+9. KDYŽ CI FAILNE...
+   Automaticky se vytvoří GitHub issue s štítkem
+   P0-critical. Issue se zavře když CI projde.
+        ↓
+10. KDYŽ JE ČAS NA VYDÁNÍ...
    Vytvoříš release/v1.0.0 z develop
    → PR do main
    → Po merge: vytvoříš tag v1.0.0
@@ -147,13 +152,46 @@ Každé pondělí ráno (2:00 UTC) se automaticky spustí:
 | Kontrola | Co dělá |
 |----------|---------|
 | **Rector** (dry-run) | "Může se ten kód napsat moderněji?" (nic nemění, jen hlásí) |
-| **Bundle analysis** | "Není frontend moc velký?" (kontrola velikosti buildu) |
-| **Circular deps** | "Neodkazují soubory na sebe navzájem?" (cyklické závislosti) |
-| **Dependency review** | "Nejsou v knihovnách nové zranitelnosti?" |
+| **Bundle analysis** | "Není frontend moc velký?" (rollup-plugin-visualizer → `dist/stats.html`, upload jako artifact) |
+| **Dependency review** | "Nejsou v knihovnách nové zranitelnosti?" (GitHub dependency-review-action) |
+| **Labels sync** | Synchronizace štítků z `.github/labels.yml` (ghaction-github-labeler) |
 
 Lze spustit i manuálně (workflow_dispatch).
 
-## 6. Štítky (labels) na GitHubu
+## 6. Dependabot — automatické aktualizace závislostí
+
+Každé pondělí 3:00 (Europe/Prague) Dependabot zkontroluje nové verze a vytvoří PR:
+
+| Ecosystem | Adresář | Co updatuje |
+|-----------|---------|-------------|
+| **npm** | `/frontend` | React, Radix UI, ESLint, Vite, testing deps (grupováno) |
+| **composer** | `/backend` | Doctrine, Symfony, Slim, PHPStan (grupováno) |
+| **docker** | `/docker/php`, `/docker/frontend` | Base images |
+| **github-actions** | `/` | Verze action v workflow souborech |
+
+Dependabot PR dostanou štítky `maintenance` + `dependencies`. Související deps jsou grupovány do jednoho PR (např. všechny Radix UI komponenty dohromady).
+
+## 7. CI Failure Notify — když CI failne
+
+Když CI workflow failne (nebo je zrušen), automaticky se spustí `ci-failure-notify.yml`:
+
+1. **Vytvoří GitHub issue** s detaily:
+   - Branch a commit SHA
+   - Seznam failnutých jobů
+   - Odkaz na workflow run
+   - Štítky: `ci-failure`, `P0-critical`, `bug`
+2. **Komentuje existující issue** pokud CI stále failne (žádné duplikáty)
+3. **Zavře issue automaticky** když CI projde
+
+## 8. CodeQL — bezpečnostní scan kódu
+
+CodeQL běží jako samostatný workflow (`codeql.yml`):
+
+- **push/PR** na main/develop — scan při každé změně
+- **cron pondělí 2:30 UTC** — chytí nové advisories i když se nic nepushuje
+- Jazyky: **javascript-typescript** (PHP CodeQL nepodporuje)
+
+## 9. Štítky (labels) na GitHubu
 
 | Štítek | Barva | Co znamená |
 |--------|-------|------------|
@@ -177,19 +215,26 @@ Lze spustit i manuálně (workflow_dispatch).
 | `wip` | světle modrá | Work in progress |
 | `blocked` | červená | Blokováno — čeká na závislost |
 | `wontfix` | bílá | Nebude opraveno |
+| `ci-failure` | červená | Automatický report CI failu |
+| `dependencies` | modrá | Dependabot update |
 
-Štítky se přidělují **automaticky** podle názvu větve — `feature/*` dostane štítek `feature`, `fix/*` dostane `bug`, `security/*` dostane `security`, atd.
+Štítky se přidělují **automaticky** podle názvu větve — `feat/*` dostane štítek `feature`, `fix/*` dostane `bug`, `security/*` dostane `security`, atd. (mapování přes `auto-label` job v `branch-rules.yml`).
 
-## 7. GitHub Actions workflows — přehled
+Štítky se synchronizují z `.github/labels.yml` přes `labels-sync` job v `code-quality.yml` (týdenně).
+
+## 10. GitHub Actions workflows — přehled
 
 | Workflow | Soubor | Kdy se spustí | Co dělá |
 |----------|--------|---------------|---------|
-| **CI** | `ci.yml` | push (main/develop), PR (main/develop) | 14 kontrol: backend lint/static/tests, frontend lint/typecheck/tests/build, security audit + CodeQL, commitlint |
-| **Branch Rules** | `branch-rules.yml` | PR (otevření, úprava, reopen) | 4 kontroly: branch naming, PR target, PR title, auto-label |
+| **CI** | `ci.yml` | push (main/develop), PR (main/develop) | Backend (PHPStan, cs-check, PHPUnit, composer audit) + Frontend (ESLint, typecheck, Vitest, build, npm audit) + commitlint (pouze PR) |
+| **CodeQL** | `codeql.yml` | push/PR (main/develop) + cron (pondělí 2:30 UTC) | CodeQL security scan (JS/TS) |
+| **Branch Rules** | `branch-rules.yml` | PR (otevření, úprava, reopen, synchronize) | Branch naming + PR target + PR title + auto-label |
+| **Code Quality** | `code-quality.yml` | cron (pondělí 2:00 UTC), manuálně | Rector dry-run, bundle analysis, dependency review, labels sync |
+| **CI Failure Notify** | `ci-failure-notify.yml` | workflow_run (po CI) | Vytvoří/aktualizuje/zavře issue při CI failu |
 | **Release** | `release.yml` | tag `v*.*.*` | Backend + frontend build, .zip archivy, GitHub Release s changelogem |
-| **Code Quality** | `code-quality.yml` | cron (pondělí 2:00 UTC), manuálně | Rector dry-run, bundle analysis, circular deps, dependency review |
+| **Dependabot** | `.github/dependabot.yml` | cron (pondělí 3:00 Prague) | npm + composer + docker + github-actions updates |
 
-## 8. Branch protection (co je zakázáno)
+## 11. Branch protection (co je zakázáno)
 
 Na GitHubu (Settings → Branches) je nastaveno:
 
@@ -197,7 +242,7 @@ Na GitHubu (Settings → Branches) je nastaveno:
 - **Žádný direct push** — vše musí přes PR
 - **Min. 1 approval** — kód musí schválit
 - **CODEOWNERS review** — pro security soubory povinné
-- **14 CI kontrol musí projít** — všechny, žádná nesmí fail
+- **CI kontroly musí projít** — backend + frontend + CodeQL
 - **Conventional Commits** — PR title musí mít správný formát
 - **Linear history** — squash nebo rebase merge (ne merge bubble)
 - **Force push zakázán** — historii nelze přepsat
@@ -210,6 +255,6 @@ Na GitHubu (Settings → Branches) je nastaveno:
 - **Force push zakázán**
 - **Smazání zakázáno**
 
-## 9. Shrnutí jednou větou
+## 12. Shrnutí jednou větou
 
-**Nic nejde přímo do `main` — všechno musí projít `develop`, přes PR s 14 automatickými kontrolami a code review, a jen release/hotfix větve se dostanou do `main` s verzovým tagem.**
+**Nic nejde přímo do `main` — všechno musí projít `develop`, přes PR s automatickými kontrolami (PHPStan, PHPUnit, ESLint, Vitest, CodeQL, audit) a code review. CI fail automaticky vytvoří issue. Dependabot týdně navrhuje aktualizace. Jen release/hotfix větve se dostanou do `main` s verzovým tagem.**

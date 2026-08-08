@@ -561,8 +561,8 @@ Bloky se kopírují do `frontend/src/components/blocks/` — je to náš kód, m
 
 | Standard | Popis | Nástroj |
 |----------|-------|---------|
-| **TypeScript strict mode** | `strict: true`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes` | `frontend/tsconfig.json` |
-| **ESLint** | Linting s `@typescript-eslint/strict` a `airbnb` preset | `frontend/.eslintrc.cjs` |
+| **TypeScript strict mode** | `strict: true`, `noUncheckedIndexedAccess` | `frontend/tsconfig.json` |
+| **ESLint** | Linting s `@typescript-eslint` + `react-hooks` + `react-refresh` | `frontend/.eslintrc.cjs` |
 | **Prettier** | Konzistentní formátování | `frontend/.prettierrc` |
 | **React 18 best practices** | Funkční komponenty, hooks, jsx-runtime | ESLint react/recommended |
 | **WCAG 2.1 AA** | Přístupnost | shadcn/ui (Radix UI základ) |
@@ -605,7 +605,7 @@ Bloky se kopírují do `frontend/src/components/blocks/` — je to náš kód, m
 | Standard | Popis |
 |----------|-------|
 | **Conventional Commits 1.0** | `feat(scope): description`, `fix(scope):`, `security(scope):`, etc. |
-| **Git Flow (zjednodušený)** | `main` → `develop` → `feature/*`, `fix/*`, `security/*`, `refactor/*`, etc. |
+| **Git Flow (zjednodušený)** | `main` → `develop` → `feat/*`, `fix/*`, `security/*`, `refactor/*`, etc. |
 | **SemVer 2.0** | `MAJOR.MINOR.PATCH` — tag formát `v{X.Y.Z}` |
 | **Branch naming** | `{type}/{kebab-case-description}` — viz `docs/08-versioning-strategy.md` |
 | **Signed commits (volitelně)** | GPG/SSH pro security projekt |
@@ -820,7 +820,7 @@ main (produkční, vždy deployable)
 ├── v1.0.1 (tag — hotfix)
 │
 develop (vývojová integrace)
-├── feature/updates-batch-ui      → PR do develop
+├── feat/updates-batch-ui      → PR do develop
 ├── fix/ssl-check-timeout          → PR do develop
 ├── security/xss-site-detail       → PR do develop
 ├── refactor/module-registry       → PR do develop
@@ -833,7 +833,7 @@ hotfix/v1.0.1                      → PR do main (z main)
 
 | Branch prefix | Target | Merge metoda |
 |---------------|--------|--------------|
-| `feature/*`, `fix/*`, `security/*`, `refactor/*`, `perf/*`, `docs/*`, `test/*`, `chore/*` | `develop` | Squash merge |
+| `feat/*`, `fix/*`, `security/*`, `refactor/*`, `perf/*`, `docs/*`, `test/*`, `chore/*` | `develop` | Squash merge |
 | `release/*` | `main` | Merge commit |
 | `hotfix/*` | `main` | Merge commit |
 
@@ -877,12 +877,27 @@ chore(deps): aktualizovat Slim 4 na 4.14
 
 ### 4.1 Backend testy
 
-- **PHPUnit** pro unit + integration testy
+- **PHPUnit 11** pro unit + integration testy
 - **Mockery** pro mocking závislostí
-- Test DB: samostatná databáze `wp_monitor_test` (v Dockeru — `docker compose exec app php bin/migrate --env=testing`)
-- Feature testy: testují celý request lifecycle přes Slim test client
+- `TestCase.php` base class s `MockeryPHPUnitIntegration` trait (Mockery expectations se počítají jako assertions)
+- `composer test` používá `--fail-on-empty-test-suite --fail-on-risky` — CI failne při 0 testů nebo risky testech
+- Integration testy: testují celý request lifecycle přes Slim App test client
 
-**Struktura:**
+**Struktura (aktuální stav):**
+
+```
+backend/tests/
+├── TestCase.php                                      # Base class (Mockery integration)
+├── Unit/
+│   ├── Storage/
+│   │   └── ConnectionTest.php                        # 8 tests (query, statement, transactions)
+│   └── Http/Middleware/
+│       └── JsonBodyParserMiddlewareTest.php          # 5 tests (valid/invalid JSON, non-JSON, empty, array)
+└── Integration/
+    └── HealthEndpointTest.php                        # 4 tests (200, content-type, status, timestamp)
+```
+
+**Plánovaná struktura (jak se moduly implementují):**
 
 ```
 backend/tests/
@@ -907,66 +922,98 @@ backend/tests/
 └── TestCase.php
 ```
 
-**Příklad testu:**
+**Příklad testu (ConnectionTest):**
 
 ```php
-class CryptoServiceTest extends TestCase
+final class ConnectionTest extends TestCase
 {
-    public function testEncryptDecryptRoundtrip(): void
+    public function testExecuteQueryReturnsAssociativeRows(): void
     {
-        $key = random_bytes(32);
-        $crypto = new CryptoService($key);
+        $expected = [['id' => 1, 'name' => 'test'], ['id' => 2, 'name' => 'other']];
+        $result = \Mockery::mock(Result::class);
+        $result->expects('fetchAllAssociative')->andReturn($expected);
 
-        $plaintext = 'my-secret-password';
-        $aad = pack('NN', 1, 1); // site_id=1, user_id=1
+        $dbal = \Mockery::mock(DBALConnection::class);
+        $dbal->expects('executeQuery')->with('SELECT * FROM sites', [])->andReturn($result);
 
-        $encrypted = $crypto->encrypt($plaintext, $aad);
-        $decrypted = $crypto->decrypt($encrypted, $aad);
+        $connection = new Connection($dbal);
+        $rows = $connection->executeQuery('SELECT * FROM sites');
 
-        $this->assertSame($plaintext, $decrypted);
+        $this->assertSame($expected, $rows);
+    }
+}
+```
+
+**Příklad integration testu (HealthEndpointTest):**
+
+```php
+final class HealthEndpointTest extends TestCase
+{
+    private App $app;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $containerBuilder = new ContainerBuilder();
+        $containerBuilder->addDefinitions(__DIR__ . '/../../config/container.php');
+        $container = $containerBuilder->build();
+        AppFactory::setContainer($container);
+        $this->app = AppFactory::create();
+        (require __DIR__ . '/../../config/middleware.php')($this->app);
+        (require __DIR__ . '/../../config/routes.php')($this->app);
     }
 
-    public function testDecryptFailsWithWrongAad(): void
+    public function testHealthEndpointReturns200(): void
     {
-        $key = random_bytes(32);
-        $crypto = new CryptoService($key);
-
-        $encrypted = $crypto->encrypt('secret', pack('NN', 1, 1));
-
-        $this->expectException(DecryptionException::class);
-        $crypto->decrypt($encrypted, pack('NN', 2, 1)); // different site_id
+        $request = (new ServerRequestFactory())->createServerRequest('GET', '/api/health');
+        $response = $this->app->handle($request);
+        $this->assertSame(200, $response->getStatusCode());
     }
 }
 ```
 
 ### 4.2 Frontend testy
 
-- **Vitest** pro unit testy
+- **Vitest 4** pro unit testy
 - **React Testing Library** pro komponent testy
 - **MSW (Mock Service Worker)** pro API mocking
+- **jsdom** pro DOM simulaci
+- `setup.ts` — `window.__ENV__` pro API URL, jest-dom matchers, RTL cleanup po každém testu
 
-**Struktura:**
+**Struktura (aktuální stav):**
 
 ```
-frontend/src/
-├── __tests__/
-│   ├── components/
-│   │   ├── SitesList.test.tsx
-│   │   └── BatchUpdateDialog.test.tsx
-│   ├── lib/
-│   │   ├── api.test.ts
-│   │   └── crypto.test.ts
-│   └── stores/
-│       └── authStore.test.ts
+frontend/src/__tests__/
+├── setup.ts                          # window.__ENV__, jest-dom, RTL cleanup
+├── components/
+│   └── App.test.tsx                  # 7 tests (navigation links, route content)
+├── lib/
+│   └── api.test.ts                   # 10 tests (get/post/put/delete, auth token, errors, 204)
+└── stores/
+    └── authStore.test.ts             # 4 tests (initial state, login, roles, logout)
 ```
 
-### 4.3 E2E testy
+**Příklad testu (api.test.ts):**
+
+```typescript
+it('sends GET request with correct URL', async () => {
+  mockFetch.mockResolvedValue(jsonResponse({ status: 'ok' }));
+  await api.get('/health');
+  expect(mockFetch).toHaveBeenCalledWith(
+    'http://localhost:8080/api/health',
+    expect.objectContaining({ method: 'GET' }),
+  );
+});
+```
+
+### 4.3 E2E testy (plánováno)
 
 - **Playwright** pro end-to-end testy
 - Testuje se celý flow: login → add site → run updates → verify
+- Zatím neimplementováno — plánováno pro další fázi
 
 ```
-e2e/
+e2e/                                  # Plánováno
 ├── auth.spec.ts
 ├── sites.spec.ts
 ├── updates.spec.ts
@@ -977,20 +1024,45 @@ e2e/
 
 ```bash
 # Backend
-composer test                    # PHPUnit
-composer test:coverage           # s coverage reportem
-composer analyse                 # PHPStan
+docker compose exec app composer test           # PHPUnit (17 tests, --fail-on-empty-test-suite --fail-on-risky)
+docker compose exec app composer test:coverage  # PHPUnit + coverage report (HTML + text)
+docker compose exec app composer analyse        # PHPStan level 8
+docker compose exec app composer cs-check       # PHP-CS-Fixer (PSR-12)
+docker compose exec app composer audit          # Composer vulnerability check
 
 # Frontend
-npm run test                     # Vitest
-npm run test:ui                  # Vitest UI
-npm run lint                     # ESLint
-npm run typecheck                # tsc --noEmit
+docker compose exec frontend npm run test           # Vitest (21 tests)
+docker compose exec frontend npm run test:watch     # Vitest watch mode
+docker compose exec frontend npm run test:ui        # Vitest UI
+docker compose exec frontend npm run test:coverage  # Vitest + coverage report
+docker compose exec frontend npm run lint           # ESLint
+docker compose exec frontend npm run typecheck      # tsc --noEmit
+docker compose exec frontend npm run build          # Vite production build
 
-# E2E
-npx playwright test
-npx playwright test --headed
+# E2E (plánováno)
+# npx playwright test
+# npx playwright test --headed
 ```
+
+### 4.5 PHPStan konfigurace
+
+PHPStan level 8 + strict rules s vyjimkami:
+
+| Pravidlo | Stav | Důvod |
+|----------|------|-------|
+| `disallowedShortTernary` | vypnuto | `?:` je idiomatické PHP |
+| `missingType.iterableValue` | potlačeno | nevyžaduje PHPDoc na každém `array` parametru |
+| `staticMethod.dynamicCall` | ignorováno v `tests/*` | PHPUnit assertions via `$this->` |
+| Mockery type rules | ignorováno v `tests/*` | Mockery mock types neodvozitelné |
+
+### 4.6 Test výsledky (aktuální)
+
+| Vrstva | Testů | Assertions | Status |
+|--------|-------|------------|--------|
+| Backend unit | 13 | 27 | ✅ 0 risky |
+| Backend integration | 4 | 7 | ✅ |
+| Frontend unit | 21 | — | ✅ |
+| **Celkem** | **38** | — | **✅ 0 failures** |
 
 ## 5. Vytvoření nového modulu
 

@@ -28,8 +28,8 @@ main (produkční)
 ├── v1.1.0 (tag)
 │
 develop (vývojová integrace)
-├── feature/updates-batch-ui
-├── feature/backup-s3-storage
+├── feat/updates-batch-ui
+├── feat/backup-s3-storage
 ├── fix/credential-decrypt-error
 ├── security/xss-in-site-detail
 ├── refactor/module-registry
@@ -45,7 +45,7 @@ hotfix/v1.0.1 (emergency fix — z main)
 |--------|------|-------------|------------|-----------|
 | `main` | Produkční kód, vždy deployable | — | — | trvalá |
 | `develop` | Vývojová integrace, nejnovější feature kód | `main` (init) | `main` (při release) | trvalá |
-| `feature/{ticket}-{description}` | Nová funkce | `develop` | `develop` | dočasná |
+| `feat/{ticket}-{description}` | Nová funkce | `develop` | `develop` | dočasná |
 | `fix/{ticket}-{description}` | Oprava chyby (neprodukční) | `develop` | `develop` | dočasná |
 | `security/{ticket}-{description}` | Bezpečnostní oprava | `develop` | `develop` + `main` (kritické) | dočasná |
 | `refactor/{ticket}-{description}` | Refaktoring bez změny chování | `develop` | `develop` | dočasná |
@@ -58,8 +58,8 @@ hotfix/v1.0.1 (emergency fix — z main)
 
 ### 2.2 Naming pravidla
 
-- **kebab-case** pro názvy větví (`feature/updates-batch-ui`, ne `feature/UpdatesBatchUI`)
-- **Ticket ID volitelné** — pokud používáme issues, prefix: `feature/UPD-12-batch-ui`
+- **kebab-case** pro názvy větví (`feat/updates-batch-ui`, ne `feat/UpdatesBatchUI`)
+- **Ticket ID volitelné** — pokud používáme issues, prefix: `feat/UPD-12-batch-ui`
 - **Max 50 znaků** pro název větve (bez prefixu)
 - **Bez diakritiky** — pouze ASCII znaky
 - **Krátký a popisný** — `fix/ssl-check-timeout` ne `fix/problem-with-ssl-checking-when-timeout-occurs`
@@ -67,7 +67,7 @@ hotfix/v1.0.1 (emergency fix — z main)
 ### 2.3 Příklady
 
 ```
-✅ feature/updates-batch-ui
+✅ feat/updates-batch-ui
 ✅ fix/ssl-check-timeout
 ✅ security/xss-site-detail
 ✅ refactor/module-registry
@@ -75,11 +75,11 @@ hotfix/v1.0.1 (emergency fix — z main)
 ✅ hotfix/v1.0.1
 ✅ docs/api-specification
 
-❌ feature/Updates Batch UI        (mezery, velká písmena)
+❌ feat/Updates Batch UI        (mezery, velká písmena)
 ❌ fix/oprava                      (ne popisné)
-❌ feature/very-long-branch-name-that-exceeds-fifty-characters-limit-here (příliš dlouhé)
+❌ feat/very-long-branch-name-that-exceeds-fifty-characters-limit-here (příliš dlouhé)
 ❌ update-branch                   (bez prefixu)
-❌ feature/aktualizace             (diakritika)
+❌ feat/aktualizace             (diakritika)
 ```
 
 ## 3. Workflow podle typu změny
@@ -90,7 +90,7 @@ hotfix/v1.0.1 (emergency fix — z main)
 # 1. Vytvoř větev z develop
 git checkout develop
 git pull origin develop
-git checkout -b feature/updates-batch-ui
+git checkout -b feat/updates-batch-ui
 
 # 2. Vývoj — commity podle Conventional Commits
 git commit -m "feat(updates): pridat batch update dialog"
@@ -98,8 +98,8 @@ git commit -m "feat(updates): pridat progress bar pro batch operace"
 git commit -m "test(updates): pridat testy pro batch update"
 
 # 3. Push a vytvoř PR do develop
-git push -u origin feature/updates-batch-ui
-# GitHub: vytvoř PR feature/updates-batch-ui → develop
+git push -u origin feat/updates-batch-ui
+# GitHub: vytvoř PR feat/updates-batch-ui → develop
 
 # 4. Po review a CI: squash merge do develop
 ```
@@ -203,7 +203,7 @@ git push origin develop
 
 | Commit type | Branch prefix | Mergeno do | Zvyšuje verzi |
 |-------------|---------------|------------|---------------|
-| `feat` | `feature/` | develop | MINOR (při release) |
+| `feat` | `feat/` | develop | MINOR (při release) |
 | `fix` | `fix/` | develop | PATCH (při release) |
 | `security` | `security/` nebo `hotfix/` | develop nebo main | PATCH nebo MINOR |
 | `refactor` | `refactor/` | develop | — (zpětně kompatibilní) |
@@ -211,13 +211,13 @@ git push origin develop
 | `docs` | `docs/` | develop | — |
 | `test` | `test/` | develop | — |
 | `chore` | `chore/` | develop | — |
-| `BREAKING CHANGE` | `feature/` nebo `hotfix/` | develop nebo main | MAJOR |
+| `BREAKING CHANGE` | `feat/` nebo `hotfix/` | develop nebo main | MAJOR |
 
 ## 5. Pravidla pro merge
 
 | Z → Do | Metoda | Důvod |
 |--------|--------|-------|
-| `feature/*` → `develop` | **Squash merge** | Čistá historie, jeden commit per feature |
+| `feat/*` → `develop` | **Squash merge** | Čistá historie, jeden commit per feature |
 | `fix/*` → `develop` | **Squash merge** | Čistá historie |
 | `security/*` → `develop` | **Squash merge** | Čistá historie |
 | `release/*` → `main` | **Merge commit** | Zachovat release historii |

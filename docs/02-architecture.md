@@ -284,14 +284,14 @@ foreach ($results as $siteId => $result) {
 | Vrstva | Technologie | Důvod |
 |--------|-------------|-------|
 | UI framework | **React 18** | Industry standard, ekosystém, TypeScript podpora |
-| Build tool | **Vite 5** | Extrémně rychlý HMR, ESBuild-based |
+| Build tool | **Vite 7** | Extrémně rychlý HMR, ESBuild-based |
 | Jazyk | **TypeScript 5** | Type safety, IDE podpora |
 | Styling | **TailwindCSS 3** | Utility-first, žádné CSS-in-JS overhead |
 | UI komponenty | **shadcn/ui** | Přístupné, customizovatelné, vlastní kód (ne dependency) |
 | UI bloky | **shadcnblocks.com** (premium licence) | 1816+ hotových bloků — Dashboard, Application Shell, Data Table, Chart Group, Sidebar, etc. |
 | State management | **Zustand** | Minimální, bez boilerplate, perfektní pro UI state |
 | Data fetching | **TanStack Query 5** | Caching, retry, optimistic updates, background refetch |
-| Routing | **React Router 6** | Standard, lazy loading routes |
+| Routing | **React Router 7** | Standard, lazy loading routes |
 | Icons | **Lucide React** | Lightweight, tree-shakeable |
 | Forms | **React Hook Form + Zod** | Performant, schema-validace |
 | Charts | **Recharts** | Dashboard grafy (integrace s shadcn Chart Group bloky) |
