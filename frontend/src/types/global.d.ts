@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 interface WindowEnv {
   VITE_API_URL?: string;
   VITE_APP_NAME?: string;
