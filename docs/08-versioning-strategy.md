@@ -227,12 +227,135 @@ git push origin develop
 
 ## 6. Changelog
 
-Changelog se generuje automaticky z GitHub Releases (pomocí `generate_release_notes: true` v release workflow).
+WP Monitor udržuje changelog ve **dvou jazykových verzích**:
 
-Formát v GitHub Release:
+| Soubor | Jazyk | Git | Účel |
+|--------|-------|-----|------|
+| `CHANGELOG.md` | Angličtina | ✅ Commitnuto | Veřejná historie změn (GitHub, dokumentace) |
+| `CHANGELOG_CS.md` | Čeština | ❌ Gitignored | Lokální reference pro vývojáře |
+
+### 6.1 Formát
+
+- Verzování podle [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`)
+- Datum v evropském formátu **DD.MM.YYYY**
+- Struktura podle [Keep a Changelog](https://keepachangelog.com/)
+- Záznamy seřazeny od nejnovější verze nahoru
+
+### 6.2 Struktura — anglická verze (`CHANGELOG.md`)
 
 ```markdown
-## v1.1.0 — 2026-08-15
+# Changelog
+
+All notable changes to WP Monitor are documented in this file.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+- New feature description
+
+### Changed
+- What was modified
+
+### Fixed
+- Bug fixes
+
+### Security
+- Security-related changes
+
+### Breaking
+- Breaking changes (if any)
+
+## [1.0.0] — 08.08.2026
+
+### Added
+- Initial release with auth, sites, dashboard, updates, backups, security, SEO modules
+```
+
+### 6.3 Struktura — česká verze (`CHANGELOG_CS.md`)
+
+```markdown
+# Changelog
+
+Všechny významné změny ve WP Monitor jsou dokumentovány v tomto souboru.
+Formát je založen na [Keep a Changelog](https://keepachangelog.com/cs/1.1.0/),
+a tento projekt dodržuje [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Nové
+- Popis nové funkce
+
+### Změněno
+- Co bylo upraveno
+
+### Opraveno
+- Opravy chyb
+
+### Bezpečnost
+- Změny související s bezpečností
+
+### Breaking
+- Breaking changes (pokud nějaké)
+
+## [1.0.0] — 08.08.2026
+
+### Nové
+- První verze s moduly auth, sites, dashboard, updates, backups, security, SEO
+```
+
+### 6.4 Sekce a jejich význam
+
+| Sekce (EN) | Sekce (CS) | Kdy použít |
+|------------|------------|------------|
+| `Added` | `Nové` | Nové funkce (`feat:`) |
+| `Changed` | `Změněno` | Změny existující funkcionality (`refactor:`, `perf:`) |
+| `Fixed` | `Opraveno` | Opravy chyb (`fix:`) |
+| `Security` | `Bezpečnost` | Bezpečnostní změny (`security:`) |
+| `Breaking` | `Breaking` | Breaking changes (`!` nebo `BREAKING CHANGE:`) |
+| `Deprecated` | `Zastaralé` | Funkce, které budou odstraněny |
+| `Removed` | `Odstraněno` | Odstraněné funkce |
+
+### 6.5 Určení typu verze
+
+| Typ změny | Zvýšení verze | Commit type |
+|-----------|---------------|-------------|
+| Breaking change | MAJOR | `feat!:` nebo `BREAKING CHANGE:` v commit body |
+| Nová funkce | MINOR | `feat:` |
+| Oprava chyby | PATCH | `fix:` |
+| Bezpečnostní oprava | PATCH nebo MINOR | `security:` |
+| Refaktoring | — (zpětně kompatibilní) | `refactor:` |
+| Dokumentace | — | `docs:` |
+| Údržba | — | `chore:` |
+
+### 6.6 Postup tvorby changelogu
+
+1. **Načti existující changelogy** — přečti `CHANGELOG.md` a `CHANGELOG_CS.md`
+2. **Zjisti změny** — `git log --oneline <last-tag>..HEAD` nebo `git log --oneline --since="<datum>"`
+3. **Filtruj podle commit type** — `feat:`, `fix:`, `security:`, `refactor:`, `docs:`, `chore:`
+4. **Urči typ verze** — MAJOR / MINOR / PATCH podle tabulky výše
+5. **Vytvoř záznam v anglické verzi** — `CHANGELOG.md` s anglickým popisem
+6. **Vytvoř záznam v české verzi** — `CHANGELOG_CS.md` s českým popisem
+7. **Commit pouze anglickou verzi** — `git add CHANGELOG.md && git commit -m "docs: update changelog for version X.Y.Z"`
+8. **Česká verze zůstává lokální** — je v `.gitignore`, nikdy ji necommituj
+
+### 6.7 Pravidla
+
+- **Datum vždy v evropském formátu** DD.MM.YYYY (např. `08.08.2026`, ne `2026-08-08`)
+- **Česká verze je v `.gitignore`** — nikdy ji necommituj
+- **Anglická verze je verzovaná v gitu** — commituj ji s každou verzí
+- **Používej [Unreleased] sekci** — pro dosud nevydané změny
+- **Odkazuj na issue/PR čísla** — `(#12)` na konci položky
+- **Popisuj co, ne jak** — `hromadné aktualizace s progress barem` ne `přidán BatchUpdateService.php s ProgressBar komponentou`
+- **Jedna položka = jeden commit** — nespojuj více commitů do jedné položky (kromě souvisejících)
+
+### 6.8 GitHub Releases
+
+Kromě `CHANGELOG.md` se changelog generuje i automaticky do GitHub Releases (pomocí `generate_release_notes: true` v release workflow). GitHub Release obsahuje:
+
+```markdown
+## v1.1.0 — 15.08.2026
 
 ### Features
 - feat(updates): hromadné aktualizace s progress barem (#12)
@@ -248,3 +371,5 @@ Formát v GitHub Release:
 ### Breaking Changes
 - feat(api): změna response formátu pro /dashboard/overview (#10)
 ```
+
+`CHANGELOG.md` je primární zdroj — GitHub Release je automatický doplněk.

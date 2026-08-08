@@ -67,8 +67,9 @@ Prioritní zásady: **100% zabezpečení, rychlost, modularita** — bez komprom
 - Varovné signály: 5+ témat ve třídě, 8+ useState, 6+ injektovaných závislostí, duplikace ve 3+ souborech
 
 ## Frontend — shadcnblocks.com (premium licence)
-- UI base: shadcn/ui (button, dialog, table, etc.) — instalace přes `npx shadcn@latest add`
-- UI bloky: shadcnblocks.com (premium) — 1816+ bloků, instalace přes `npx shadcn@latest add <url>`
+- UI base: shadcn/ui (button, dialog, table, etc.) — instalace přes `npx shadcn@latest add` nebo `shadcn` MCP
+- UI bloky: shadcnblocks.com (premium) — 1837+ bloků, instalace přes `shadcn` MCP (`search_items_in_registries`, `get_add_command_for_items`) nebo `npx shadcn@latest add <url>`
+- MCP server `shadcn` je nakonfigurován s `SHADCNBLOCKS_API_KEY` — plný přístup k premium blokům
 - Bloky v `frontend/src/components/blocks/` (dashboard, app-shell, data-table, chart-group, bento, feature)
 - Custom komponenty v `frontend/src/components/common/` (WP Monitor specifické)
 - Pravidla: bloky upravuj minimálně, custom logiku do separátních komponent, neduplikovat bloky

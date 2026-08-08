@@ -10,7 +10,7 @@
 | Status | {draft / approved / in-progress / completed / cancelled} |
 | Vytvořeno | {DD.MM.YYYY} |
 | Autor | {jméno / AI agent} |
-| Související workflow | {název workflow souboru} |
+| Související skill | {.devin/skills/{název}/SKILL.md} |
 | Související dokumentace | {docs/XX-...md} |
 
 ## 1. Cíl
@@ -26,7 +26,7 @@
 {Co už existuje v frontend/src/ — komponenty, stránky, store. Co chybí.}
 
 ### 2.3 Databáze
-{Reálný stav DB — existující tabulky, sloupce, indexy. Overeno pres mariadb MCP nebo primo.}
+{Reálný stav DB — existující tabulky, sloupce, indexy. Ověřeno přes `mcp_server_mysql` MCP (`mysql_query` s `SHOW TABLES`, `DESCRIBE`, `SHOW INDEX`) nebo `mariadb` CLI.}
 
 ### 2.4 Rozdíl oproti dokumentaci
 {Co dokumentace popisuje ale v kódu chybí. Co v kódu je ale dokumentace nezachycuje.}
@@ -108,6 +108,13 @@ src/
   - Backend: `final` třídy, `readonly` properties, typed return types, PHPDoc pro `@throws`/`@return`
   - Frontend: named exports (ne default), `async/await` (ne `.then()`), TypeScript strict typy
 - [ ] **Ověř linting nástroje** — spusť `composer cs-check --dry-run` a `npm run lint` na aktuálním kódu, ať víš, jaký výstup má vypadat
+- [ ] **Dostupné MCP servery** — využij při implementaci:
+  - `mcp_server_mysql` — DB dotazy (`mysql_query` s `SHOW TABLES`, `DESCRIBE`, `SELECT`, atd.)
+  - `playwright` — vizuální kontrola frontendu (`browser_navigate`, `browser_take_screenshot`, `browser_console_messages`)
+  - `context7` — aktuální dokumentace knihoven (`resolve-library-id` → `query-docs`) pro React, Slim 4, Doctrine, shadcn/ui
+  - `shadcn` — vyhledávání a instalace shadcn/ui komponent a shadcnblocks.com premium bloků (`search_items_in_registries`, `get_add_command_for_items`)
+  - `sequential-thinking` — komplexní architektonická a bezpečnostní rozhodnutí (`sequentialthinking`)
+  - `github` — issues, PRs, repozitáře
 
 ### Fáze 1: {název fáze}
 - [ ] {krok 1}
@@ -137,8 +144,8 @@ src/
 - [ ] `npm run test` — bez chyb
 - [ ] `npm run lint` — bez chyb
 - [ ] `npm run typecheck` — bez chyb
-- [ ] DB verifikace přes `mariadb` MCP (`list_tables`, `describe_table`, `SHOW INDEX`)
-- [ ] Vizuální kontrola přes `mcp-playwright` (pokud se mění frontend)
+- [ ] DB verifikace přes `mcp_server_mysql` MCP (`mysql_query` s `SHOW TABLES`, `DESCRIBE`, `SHOW INDEX`)
+- [ ] Vizuální kontrola přes `playwright` MCP (pokud se mění frontend)
 
 ## 8b. Ladění chyb (striktní pravidla)
 
@@ -200,9 +207,9 @@ Při ladění jakékoliv chyby (lint, typecheck, build, test, runtime) platí:
 
 ## 13. Post-implementační kontrola
 
-- [ ] **Code review** — projdi implementaci podle workflow `.windsurf/workflows/code-review.md` (bezpečnost, rychlost, modularita)
-- [ ] **DB verifikace** — pokud se měnila DB, ověř přes `mariadb` MCP (`list_tables`, `describe_table`, `SHOW INDEX`, `SHOW CREATE TABLE`)
-- [ ] **Vizuální kontrola** — pokud se měnil frontend, ověř přes `mcp-playwright` (`browser_navigate`, `browser_take_screenshot`, `browser_console_messages`)
+- [ ] **Code review** — projdi implementaci podle skillu `.devin/skills/code-review/SKILL.md` (bezpečnost, rychlost, modularita)
+- [ ] **DB verifikace** — pokud se měnila DB, ověř přes `mcp_server_mysql` MCP (`mysql_query` s `SHOW TABLES`, `DESCRIBE`, `SHOW INDEX`, `SHOW CREATE TABLE`)
+- [ ] **Vizuální kontrola** — pokud se měnil frontend, ověř přes `playwright` MCP (`browser_navigate`, `browser_take_screenshot`, `browser_console_messages`)
 - [ ] **Cross-module impact** — ověř že změna neovlivní ostatní moduly (EventDispatcher eventy, sdílené služby v `Core/` nebo `Shared/`, DB tabulky)
 - [ ] **Environment variables** — pokud se přidaly nové `.env` proměnné, aktualizuj `backend/.env.example` a `docs/12-environment-variables.md`
 - [ ] **Dependency audit** — pokud se přidaly nové balíčky:
@@ -220,7 +227,7 @@ Při ladění jakékoliv chyby (lint, typecheck, build, test, runtime) platí:
   - Pokud si nejsi jistý, projdi `git diff --cached` a hledej patterny jako `password=`, `key=`, `secret=`, `token=`
 - [ ] **Commit** — vytvoř commit s konvenčním formátem (Conventional Commits: `feat:`, `fix:`, `refactor:`, `docs:`, `chore:`, `security:`)
 - [ ] **Push** — pushni na `origin/main` (nebo feature branch pokud je definována)
-- [ ] **Changelog** — podle workflow `.windsurf/workflows/changelog.md`:
+- [ ] **Changelog** — podle skillu `.devin/skills/changelog/SKILL.md`:
   - Aktualizuj `CHANGELOG.md` (anglicky, commitnuto do gitu)
   - Aktualizuj `CHANGELOG_CS.md` (česky, gitignored, lokální)
   - Verze podle Semantic Versioning (MAJOR/MINOR/PATCH)

@@ -60,4 +60,4 @@ Při plánování a realizaci se vždy řídit těmito prioritami v uvedeném po
 - Pro všechny příkazy spusť s příslušným pracovním adresářem
 - Vždy zálohuj DB před migrací
 - Po deploy zkontroluj audit log že je funkční
-- Pro vizuální kontrolu použij prohlížeč pro vizuální kontrolu
+- Pro vizuální kontrolu použij `playwright` MCP server (nástroje `browser_navigate`, `browser_take_screenshot`, `browser_console_messages`)

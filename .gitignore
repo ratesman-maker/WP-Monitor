@@ -1,8 +1,8 @@
 # Devin — lokální konfigurace (obsahuje tajné údaje, gitignored)
 .devin/mcp_config.local.json
 
-# Windsurf — DB připojení (obsahuje údaje, gitignored)
-.mcp-db.json
+# Changelog — česká verze (lokální, necommitovat)
+CHANGELOG_CS.md
 
 # Docker — lokální data
 docker-data/

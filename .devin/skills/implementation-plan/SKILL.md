@@ -29,6 +29,14 @@ Před vyplněním plánu ZJISTI REÁLNÝ STAV — nespoléhej na dokumentaci:
 - **Dokumentace**: přečti relevantní docs/ soubory jako referenci, ale dokumentace nemusí být aktuální
 - **Reálný stav kódu a databáze má prioritu nad dokumentací**
 
+### 2b. Použij MCP servery při plánování
+
+Při tvorbě plánu využij dostupné MCP servery:
+- **`context7`** — načti aktuální dokumentaci knihoven/frameworků pokud si nejsi jistý API (`resolve-library-id` → `query-docs`). Vhodné pro React, TanStack Query, Zustand, Slim 4, Doctrine DBAL
+- **`sequential-thinking`** — pro komplexní architektonická rozhodnutí nebo bezpečnostní analýzu (`sequentialthinking` s kroky analýzy)
+- **`playwright`** — pokud plán zahrnuje frontend změny, ověř aktuální stav přes `browser_navigate` a `browser_take_screenshot`
+- **`shadcn`** — pokud plán zahrnuje frontend, vyhledej dostupné shadcn/ui komponenty a shadcnblocks.com premium bloky (`search_items_in_registries`, `view_items_in_registries`, `get_item_examples_from_registries`)
+
 ### 3. Vyplň plán podle šablony
 
 Vytvoř soubor v `docs/implementation-plans/{YYYY-MM-DD}-{název}.md` s vyplněnými sekcemi:

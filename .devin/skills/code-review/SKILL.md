@@ -107,8 +107,8 @@ Při review se vždy řídit těmito prioritami v uvedeném pořadí — mají p
    - Foreign keys s ON DELETE strategií
    - Audit log tabulka je append-only
 
-7. **Vizuální kontrola frontendu (prohlížeč pro vizuální kontrolu):**
-   - Pokud review zahrnuje frontend změny, použij prohlížeč pro vizuální kontrolu:
+7. **Vizuální kontrola frontendu (`playwright` MCP):**
+   - Pokud review zahrnuje frontend změny, použij `playwright` MCP server:
      - `browser_navigate` na lokální dev server (např. `http://localhost:5173`)
      - `browser_take_screenshot` pro vizuální ověření layoutu a komponent
      - `browser_console_messages` s `level: "error"` pro kontrolu JS chyb
@@ -123,4 +123,4 @@ Při review se vždy řídit těmito prioritami v uvedeném pořadí — mají p
 ## Poznámky
 - Bezpečnostní problémy jsou vždy critical — žádné kompromisy
 - Dodržuj pravidlo: "100% zabezpečení, rychlost a modularita — ze kterých nejde slevit"
-- Pro vizuální kontrolu frontendu použij prohlížeč pro vizuální kontrolu (nástroje `browser_navigate`, `browser_take_screenshot`, `browser_console_messages`, `browser_snapshot`)
+- Pro vizuální kontrolu frontendu použij `playwright` MCP server (nástroje `browser_navigate`, `browser_take_screenshot`, `browser_console_messages`, `browser_snapshot`)
