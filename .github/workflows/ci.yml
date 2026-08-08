@@ -68,18 +68,6 @@ jobs:
         working-directory: frontend
         run: npm audit --omit=dev --audit-level=high
 
-  codeql:
-    name: CodeQL Security Scan
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: github/codeql-action/init@v3
-        with:
-          languages: javascript-typescript
-      - uses: github/codeql-action/analyze@v3
-
   commitlint:
     name: Commit Message Format
     runs-on: ubuntu-latest

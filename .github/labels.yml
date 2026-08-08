@@ -59,3 +59,9 @@
 - name: wontfix
   color: "FFFFFF"
   description: "Will not fix"
+- name: ci-failure
+  color: "B60205"
+  description: "Automated CI failure report"
+- name: dependencies
+  color: "0366D6"
+  description: "Dependency update (Dependabot)"

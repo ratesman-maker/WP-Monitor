@@ -1,0 +1,149 @@
+name: CI Failure Notify
+
+# Spustí se po dokončení CI workflowu — pokud failnul, vytvoří/aktualizuje issue
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+jobs:
+  notify:
+    name: Create or update issue on CI failure
+    runs-on: ubuntu-latest
+    # Spustit jen pokud CI failnul (nebo byl zrušen)
+    if: ${{ github.event.workflow_run.conclusion != 'success' }}
+    permissions:
+      issues: write
+      actions: read
+    steps:
+      - name: Find existing open issue
+        id: find
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['ci-failure'],
+              per_page: 1
+            });
+            core.setOutput('found', issues.length > 0);
+            core.setOutput('number', issues.length > 0 ? issues[0].number : '');
+
+      - name: Get failed workflow details
+        id: details
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runId = context.payload.workflow_run.id;
+            const { data: jobs } = await github.rest.actions.listJobsForWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: runId
+            });
+            const failed = jobs.jobs.filter(j => j.conclusion === 'failure');
+            const failedNames = failed.map(j => j.name).join(', ');
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
+            const branch = context.payload.workflow_run.head_branch;
+            const commit = context.payload.workflow_run.head_sha.substring(0, 7);
+            core.setOutput('failed_jobs', failedNames);
+            core.setOutput('run_url', runUrl);
+            core.setOutput('branch', branch);
+            core.setOutput('commit', commit);
+
+      - name: Create new issue
+        if: steps.find.outputs.found == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const failedJobs = '${{ steps.details.outputs.failed_jobs }}';
+            const runUrl = '${{ steps.details.outputs.run_url }}';
+            const branch = '${{ steps.details.outputs.branch }}';
+            const commit = '${{ steps.details.outputs.commit }}';
+            const body = [
+              '## CI Failure',
+              '',
+              `**Branch:** ${branch}`,
+              `**Commit:** ${commit}`,
+              `**Failed jobs:** ${failedJobs}`,
+              `**Workflow run:** ${runUrl}`,
+              '',
+              '---',
+              '_This issue was automatically created by the CI Failure Notify workflow._',
+              '_It will be closed automatically when CI passes again._'
+            ].join('\n');
+            const { data: issue } = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'CI Failure — automated report',
+              body: body,
+              labels: ['ci-failure', 'P0-critical', 'bug']
+            });
+            core.info(`Created issue #${issue.number}`);
+
+      - name: Update existing issue
+        if: steps.find.outputs.found == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumber = parseInt('${{ steps.find.outputs.number }}');
+            const failedJobs = '${{ steps.details.outputs.failed_jobs }}';
+            const runUrl = '${{ steps.details.outputs.run_url }}';
+            const branch = '${{ steps.details.outputs.branch }}';
+            const commit = '${{ steps.details.outputs.commit }}';
+            const body = [
+              '## CI still failing',
+              '',
+              `**Branch:** ${branch}`,
+              `**Commit:** ${commit}`,
+              `**Failed jobs:** ${failedJobs}`,
+              `**Workflow run:** ${runUrl}`,
+              '',
+              '---',
+              `_Updated ${new Date().toISOString()}_`
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: body
+            });
+            core.info(`Updated issue #${issueNumber}`);
+
+  close-on-success:
+    name: Close issue when CI passes
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      issues: write
+    steps:
+      - name: Close existing ci-failure issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['ci-failure'],
+              per_page: 1
+            });
+            if (issues.length === 0) {
+              core.info('No open ci-failure issue to close');
+              return;
+            }
+            const issue = issues[0];
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              body: `CI is passing again. Closing automatically. ✅`
+            });
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              state: 'closed'
+            });
+            core.info(`Closed issue #${issue.number}`);

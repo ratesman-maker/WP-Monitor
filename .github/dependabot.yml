@@ -1,0 +1,101 @@
+# Dependabot — automatic dependency updates & security PRs
+# Docs: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+
+updates:
+  # Frontend — npm
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "03:00"
+      timezone: Europe/Prague
+    open-pull-requests-limit: 10
+    groups:
+      react:
+        patterns: ["react", "react-dom", "@types/react", "@types/react-dom"]
+      radix:
+        patterns: ["@radix-ui/*"]
+      eslint:
+        patterns: ["eslint*", "@typescript-eslint/*"]
+      vite:
+        patterns: ["vite", "@vitejs/plugin-react", "rollup-plugin-visualizer"]
+      testing:
+        patterns: ["vitest", "@vitest/*", "jsdom", "happy-dom"]
+    commit-message:
+      prefix: "chore(deps)"
+      include: scope
+    labels:
+      - maintenance
+      - dependencies
+
+  # Backend — Composer
+  - package-ecosystem: composer
+    directory: /backend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "03:00"
+      timezone: Europe/Prague
+    open-pull-requests-limit: 10
+    groups:
+      doctrine:
+        patterns: ["doctrine/*"]
+      symfony:
+        patterns: ["symfony/*"]
+      slim:
+        patterns: ["slim/*"]
+      phpstan:
+        patterns: ["phpstan/*"]
+    commit-message:
+      prefix: "chore(deps)"
+      include: scope
+    labels:
+      - maintenance
+      - dependencies
+
+  # Docker — base images
+  - package-ecosystem: docker
+    directory: /docker/php
+    schedule:
+      interval: weekly
+      day: monday
+      time: "03:00"
+      timezone: Europe/Prague
+    commit-message:
+      prefix: "chore(deps)"
+      include: scope
+    labels:
+      - maintenance
+      - dependencies
+
+  - package-ecosystem: docker
+    directory: /docker/frontend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "03:00"
+      timezone: Europe/Prague
+    commit-message:
+      prefix: "chore(deps)"
+      include: scope
+    labels:
+      - maintenance
+      - dependencies
+
+  # GitHub Actions — workflow dependencies
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "03:00"
+      timezone: Europe/Prague
+    commit-message:
+      prefix: "chore(deps)"
+      include: scope
+    labels:
+      - maintenance
+      - dependencies
