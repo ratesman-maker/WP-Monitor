@@ -12,6 +12,24 @@ parameters:
     reportUnmatchedIgnoredErrors: false
     ignoreErrors:
         - identifier: missingType.iterableValue
+        # Tests: PHPUnit assertions are called via $this-> (standard PHPUnit API)
+        - identifier: staticMethod.dynamicCall
+          paths:
+              - tests/*
+        # Tests: Mockery mocks don't directly implement interfaces (PHPStan can't infer)
+        - identifier: method.notFound
+          paths:
+              - tests/*
+        - identifier: return.type
+          paths:
+              - tests/*
+        - identifier: argument.type
+          paths:
+              - tests/*
+        # Tests: Slim\App generic type parameters not needed in test setup
+        - identifier: missingType.generics
+          paths:
+              - tests/*
     strictRules:
         allRules: true
         # Allow short ternary ?: (idiomatic PHP)
