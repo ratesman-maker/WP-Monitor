@@ -35,9 +35,15 @@ jobs:
       - name: Install dependencies
         working-directory: frontend
         run: npm ci
-      - name: Build with analysis
+      - name: Build with bundle visualizer
         working-directory: frontend
-        run: npm run build -- --report
+        run: npm run build
+      - name: Upload bundle stats
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-stats
+          path: frontend/dist/stats.html
+          retention-days: 14
 
   dependency-review:
     name: Dependency Review
@@ -45,3 +51,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/dependency-review-action@v4
+
+  labels-sync:
+    name: Sync Labels
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sync labels from .github/labels.yml
+        uses: crazy-max/ghaction-github-labeler@v5
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          yaml-file: .github/labels.yml
+          skip-delete: false

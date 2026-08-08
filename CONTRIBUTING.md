@@ -10,8 +10,12 @@ Děkujeme za zájem o přispívání do WP Monitor. Tento dokument popisuje proc
 | Bug fix | `fix/<krátký-popis>` | `fix/health-endpoint-cors` |
 | Security | `security/<krátký-popis>` | `security/credential-encryption` |
 | Refactor | `refactor/<krátký-popis>` | `refactor/storage-layer` |
+| Perf | `perf/<krátký-popis>` | `perf/query-optimization` |
 | Docs | `docs/<krátký-popis>` | `docs/api-reference` |
+| Test | `test/<krátký-popis>` | `test/auth-integration` |
 | Chore | `chore/<krátký-popis>` | `chore/update-deps` |
+| Release | `release/<krátký-popis>` | `release/v0.2.0` |
+| Hotfix | `hotfix/<krátký-popis>` | `hotfix/cors-header` |
 
 ## Commit formát
 
