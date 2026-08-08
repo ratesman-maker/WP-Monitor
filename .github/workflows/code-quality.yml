@@ -1,0 +1,47 @@
+name: Code Quality
+
+on:
+  schedule:
+    - cron: '0 2 * * 1' # Monday 2:00 UTC
+  workflow_dispatch:
+
+jobs:
+  rector:
+    name: Rector Dry-Run
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: openssl, sodium, mbstring, intl, curl, pdo_mysql, xml, zip, gd
+      - name: Install dependencies
+        working-directory: backend
+        run: composer install --no-interaction --no-progress
+      - name: Rector dry-run
+        working-directory: backend
+        run: vendor/bin/rector process --dry-run
+
+  bundle-analysis:
+    name: Frontend Bundle Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Build with analysis
+        working-directory: frontend
+        run: npm run build -- --report
+
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4

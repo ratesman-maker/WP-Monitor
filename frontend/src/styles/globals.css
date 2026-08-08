@@ -1,0 +1,138 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Root font size — 100% respects user preference (not 16px!) */
+html {
+  font-size: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Container query contexts */
+#root {
+  container-type: inline-size;
+  container-name: app;
+}
+.module-container {
+  container-type: inline-size;
+  container-name: module;
+}
+.card-container {
+  container-type: inline-size;
+  container-name: card;
+}
+.sidebar-container {
+  container-type: inline-size;
+  container-name: sidebar;
+}
+
+/* CSS variables (HSL) — dark-first (default) */
+:root {
+  --background: 222 47% 11%;
+  --foreground: 210 40% 98%;
+  --card: 222 47% 14%;
+  --card-foreground: 210 40% 98%;
+  --primary: 243 75% 59%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 215 28% 17%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 215 28% 17%;
+  --muted-foreground: 215 20% 65%;
+  --accent: 215 28% 17%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --success: 142 71% 45%;
+  --success-foreground: 0 0% 100%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 100%;
+  --info: 199 89% 48%;
+  --info-foreground: 0 0% 100%;
+  --border: 215 28% 22%;
+  --input: 215 28% 22%;
+  --ring: 243 75% 59%;
+  --radius: 0.5rem;
+
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --sidebar-w-min: 12rem;
+  --sidebar-w-default: clamp(12rem, 15cqw, 16rem);
+  --sidebar-w-collapsed: 3.5rem;
+}
+
+/* Light mode — separately designed palette (not dark mode inversion!) */
+.light {
+  --background: 210 20% 99%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --primary: 243 75% 59%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 222 47% 11%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
+  --accent: 210 40% 94%;
+  --accent-foreground: 222 47% 11%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --success: 142 71% 35%;
+  --success-foreground: 0 0% 100%;
+  --warning: 38 92% 45%;
+  --warning-foreground: 0 0% 100%;
+  --info: 199 89% 40%;
+  --info-foreground: 0 0% 100%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 243 75% 59%;
+  --radius: 0.5rem;
+}
+
+/* Base body styles */
+body {
+  margin: 0;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 12-column grid system */
+.grid-12 {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: clamp(0.75rem, 1.5cqi, 1.5rem);
+}
+
+/* Responsive grid with container queries */
+@container (min-width: 20rem) {
+  .grid-responsive { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+}
+@container (min-width: 28rem) {
+  .grid-responsive { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container (min-width: 42rem) {
+  .grid-responsive { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@container (min-width: 56rem) {
+  .grid-responsive { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@container (min-width: 72rem) {
+  .grid-responsive { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
+
+/* App layout */
+.grid-app {
+  display: grid;
+  grid-template-columns: var(--sidebar-w-default) 1fr;
+  min-height: 100vh;
+  transition: grid-template-columns 200ms ease-in-out;
+}
+.grid-app.collapsed {
+  grid-template-columns: var(--sidebar-w-collapsed) 1fr;
+}

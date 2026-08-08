@@ -1,0 +1,14 @@
+# Security files — require review from owner
+backend/src/Security/          @ratesman-maker
+backend/.env.example           @ratesman-maker
+docker/php/Dockerfile          @ratesman-maker
+docker/nginx/default.conf      @ratesman-maker
+
+# Database migrations — require review from owner
+backend/migrations/            @ratesman-maker
+
+# CI/CD configuration
+.github/workflows/             @ratesman-maker
+
+# Default — all files
+*                              @ratesman-maker

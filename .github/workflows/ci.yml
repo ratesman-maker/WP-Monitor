@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  backend:
+    name: Backend (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.3']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: openssl, sodium, mbstring, intl, curl, pdo_mysql, xml, zip, gd
+          coverage: xdebug
+      - name: Install Composer dependencies
+        working-directory: backend
+        run: composer install --no-interaction --no-progress
+      - name: PHPStan
+        working-directory: backend
+        run: composer analyse
+      - name: PHPUnit
+        working-directory: backend
+        run: composer test
+      - name: Composer audit
+        working-directory: backend
+        run: composer audit
+
+  frontend:
+    name: Frontend (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ['22']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: ESLint
+        working-directory: frontend
+        run: npm run lint
+      - name: TypeScript typecheck
+        working-directory: frontend
+        run: npm run typecheck
+      - name: Vitest
+        working-directory: frontend
+        run: npm run test
+      - name: Build
+        working-directory: frontend
+        run: npm run build
+
+  codeql:
+    name: CodeQL Security Scan
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript, php
+      - uses: github/codeql-action/analyze@v3
+
+  commitlint:
+    name: Commit Message Format
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: wagoid/commitlint-github-action@v6
+        with:
+          configFile: .commitlintrc.cjs

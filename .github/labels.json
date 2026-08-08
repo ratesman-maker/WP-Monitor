@@ -1,0 +1,22 @@
+[
+  { "name": "feature", "color": "0E8A16", "description": "New feature" },
+  { "name": "bug", "color": "B60205", "description": "Bug fix" },
+  { "name": "security", "color": "D93F0B", "description": "Security fix — P0" },
+  { "name": "refactor", "color": "1D76DB", "description": "Refactoring without behavior change" },
+  { "name": "performance", "color": "5319E7", "description": "Performance improvement" },
+  { "name": "documentation", "color": "1D76DB", "description": "Documentation" },
+  { "name": "testing", "color": "FBCA04", "description": "Tests" },
+  { "name": "maintenance", "color": "BFD4F2", "description": "Maintenance, deps, config" },
+  { "name": "release", "color": "0E8A16", "description": "Release preparation" },
+  { "name": "hotfix", "color": "D93F0B", "description": "Emergency production fix" },
+  { "name": "P0-critical", "color": "B60205", "description": "Blocks release" },
+  { "name": "P1-high", "color": "D93F0B", "description": "Important but not blocking" },
+  { "name": "P2-medium", "color": "FBCA04", "description": "Medium priority" },
+  { "name": "P3-low", "color": "0E8A16", "description": "Low priority" },
+  { "name": "breaking-change", "color": "B60205", "description": "Compatibility-breaking change" },
+  { "name": "needs-review", "color": "FBCA04", "description": "Awaiting code review" },
+  { "name": "approved", "color": "0E8A16", "description": "Approved, ready to merge" },
+  { "name": "wip", "color": "BFD4F2", "description": "Work in progress" },
+  { "name": "blocked", "color": "B60205", "description": "Blocked — waiting on dependency" },
+  { "name": "wontfix", "color": "FFFFFF", "description": "Will not fix" }
+]

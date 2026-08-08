@@ -1,0 +1,45 @@
+name: Branch Rules
+
+on:
+  pull_request:
+    types: [opened, edited, reopened]
+
+jobs:
+  validate:
+    name: Validate Branch & PR
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate branch name
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          PATTERN="^(feature|fix|security|refactor|perf|docs|test|chore|release|hotfix)/[a-z0-9-]+$"
+          if [[ ! "$BRANCH" =~ $PATTERN ]]; then
+            echo "ERROR: Branch '$BRANCH' does not match required pattern: $PATTERN"
+            echo "Example: feature/add-auth-module"
+            exit 1
+          fi
+          echo "Branch name valid: $BRANCH"
+      - name: Validate PR target
+        run: |
+          BASE="${{ github.base_ref }}"
+          BRANCH="${{ github.head_ref }}"
+          if [[ "$BRANCH" == release/* && "$BASE" != "main" ]]; then
+            echo "ERROR: release/* branches must target main"
+            exit 1
+          fi
+          if [[ "$BRANCH" == hotfix/* && "$BASE" != "main" ]]; then
+            echo "ERROR: hotfix/* branches must target main"
+            exit 1
+          fi
+          echo "PR target valid: $BRANCH -> $BASE"
+      - name: Validate PR title
+        run: |
+          TITLE="${{ github.event.pull_request.title }}"
+          PATTERN="^(feat|fix|security|refactor|perf|docs|test|chore|release|hotfix)(\(.+\))?!?: .+"
+          if [[ ! "$TITLE" =~ $PATTERN ]]; then
+            echo "ERROR: PR title '$TITLE' does not match Conventional Commits format"
+            echo "Example: feat(auth): add login page"
+            exit 1
+          fi
+          echo "PR title valid: $TITLE"

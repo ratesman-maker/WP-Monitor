@@ -1,0 +1,139 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use Doctrine\DBAL\DriverManager;
+
+require __DIR__ . '/../vendor/autoload.php';
+
+// Load environment variables
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
+$dotenv->safeLoad();
+
+// Create DBAL connection
+$connection = DriverManager::getConnection([
+    'dbname' => $_ENV['DB_NAME'] ?? 'wp_monitor',
+    'user' => $_ENV['DB_USER'] ?? 'root',
+    'password' => $_ENV['DB_PASSWORD'] ?? '',
+    'host' => $_ENV['DB_HOST'] ?? '127.0.0.1',
+    'port' => (int) ($_ENV['DB_PORT'] ?? 3306),
+    'driver' => 'pdo_mysql',
+    'charset' => $_ENV['DB_CHARSET'] ?? 'utf8mb4',
+]);
+
+// Ensure migrations tracking table exists
+$schemaManager = $connection->createSchemaManager();
+if (!$schemaManager->tablesExist(['migrations_log'])) {
+    $connection->executeStatement(<<<SQL
+        CREATE TABLE migrations_log (
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            migration_name VARCHAR(255) NOT NULL UNIQUE,
+            executed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    SQL);
+    echo "Created migrations_log table.\n";
+}
+
+// Determine command (up by default, or "down" for rollback)
+$command = $argv[1] ?? 'up';
+
+// Find migration files
+$migrationsDir = __DIR__ . '/../migrations';
+$migrationFiles = glob($migrationsDir . '/Version*.php') ?: [];
+
+if (empty($migrationFiles)) {
+    echo "No migrations found.\n";
+    exit(0);
+}
+
+// Get executed migrations (ordered by execution time)
+$executed = $connection->executeQuery(
+    'SELECT migration_name FROM migrations_log ORDER BY id DESC'
+)->fetchFirstColumn();
+
+if ($command === 'down') {
+    // Rollback the last executed migration
+    if (empty($executed)) {
+        echo "No migrations to roll back.\n";
+        exit(0);
+    }
+
+    $lastMigration = $executed[0];
+    $file = $migrationsDir . '/' . $lastMigration;
+
+    if (!file_exists($file)) {
+        echo "ERROR: Migration file $lastMigration not found.\n";
+        exit(1);
+    }
+
+    echo "Rolling back migration: $lastMigration\n";
+
+    $migration = require $file;
+
+    if (!is_array($migration) || !isset($migration['down'])) {
+        echo "ERROR: Migration $lastMigration has no 'down' key.\n";
+        exit(1);
+    }
+
+    $statements = $migration['down'];
+
+    if (is_string($statements)) {
+        $statements = [$statements];
+    }
+
+    foreach ($statements as $sql) {
+        $connection->executeStatement($sql);
+    }
+
+    $connection->executeStatement(
+        'DELETE FROM migrations_log WHERE migration_name = ?',
+        [$lastMigration]
+    );
+
+    echo "Rolled back 1 migration.\n";
+    exit(0);
+}
+
+// Default: run pending migrations (up)
+$ran = 0;
+foreach ($migrationFiles as $file) {
+    $name = basename($file);
+
+    if (in_array($name, $executed, true)) {
+        continue;
+    }
+
+    echo "Running migration: $name\n";
+
+    $migration = require $file;
+
+    if (!is_array($migration) || !isset($migration['up'])) {
+        echo "ERROR: Migration $name must return array with 'up' key.\n";
+        exit(1);
+    }
+
+    $statements = $migration['up'];
+
+    // Support both string (single statement) and array (multiple statements)
+    if (is_string($statements)) {
+        $statements = [$statements];
+    }
+
+    foreach ($statements as $sql) {
+        $connection->executeStatement($sql);
+    }
+
+    $connection->executeStatement(
+        'INSERT INTO migrations_log (migration_name) VALUES (?)',
+        [$name]
+    );
+
+    $ran++;
+}
+
+if ($ran === 0) {
+    echo "All migrations already executed.\n";
+} else {
+    echo "Executed $ran migration(s).\n";
+}

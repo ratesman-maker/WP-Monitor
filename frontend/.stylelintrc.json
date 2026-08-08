@@ -1,0 +1,9 @@
+{
+  "extends": "stylelint-config-standard",
+  "rules": {
+    "unit-disallowed-list": ["px", "%"],
+    "unit-disallowed-list-ignore-comments": true,
+    "no-descending-specificity": null,
+    "at-rule-no-unknown": [true, { "ignoreAtRules": ["tailwind", "apply", "layer", "screen", "container"] }]
+  }
+}

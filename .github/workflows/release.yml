@@ -1,0 +1,53 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build:
+    name: Build & Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: openssl, sodium, mbstring, intl, curl, pdo_mysql, xml, zip, gd
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: composer install --no-dev --optimize-autoloader --no-interaction
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Copy frontend to backend public
+        run: cp -r frontend/dist/* backend/public/assets/
+
+      - name: Create backend archive
+        run: tar -czf wp-monitor-backend.tar.gz backend/
+
+      - name: Create frontend archive
+        run: tar -czf wp-monitor-frontend.tar.gz frontend/dist/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            wp-monitor-backend.tar.gz
+            wp-monitor-frontend.tar.gz

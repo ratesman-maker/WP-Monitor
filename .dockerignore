@@ -1,0 +1,13 @@
+.git
+.gitignore
+docs/
+.devin/
+*.md
+.env
+.env.*
+vendor/
+node_modules/
+backend/storage/logs/*
+backend/storage/cache/*
+backend/storage/backups/*
+frontend/dist/
