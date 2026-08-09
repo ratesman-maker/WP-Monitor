@@ -20,6 +20,7 @@
 |--------|------|
 | `mcp_server_mysql` | DB dotazy na host MariaDB (port 3307, db `wp_monitor`, user `wp_monitor`) |
 | `github` | GitHub issues, PRs, repozitáře |
+| `gh` CLI | GitHub Actions runs, PR creation, repo management (`~/.local/bin/gh`, auth via git token) |
 | `playwright` | Vizuální kontrola frontendu (screenshoty, console errors, E2E) |
 | `context7` | Aktuální dokumentace knihoven (React, Slim 4, Doctrine, Vite, Tailwind) |
 | `shadcn` | shadcn/ui komponenty + shadcnblocks.com premium bloky |
