@@ -1,2 +1,2 @@
-backend/.phpunit.cache/
-backend/coverage/
+.phpunit.cache/
+coverage/
