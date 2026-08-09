@@ -25,6 +25,9 @@ describe('SettingsToggles', () => {
     const buttons = screen.getAllByRole('button');
     expect(buttons).toHaveLength(2);
     const [languageToggle, themeToggle] = buttons;
+    if (!languageToggle || !themeToggle) {
+      throw new Error('Expected 2 toggle buttons');
+    }
     // Click language toggle
     await user.click(languageToggle);
     // Click theme toggle
