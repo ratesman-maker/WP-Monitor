@@ -42,7 +42,17 @@
 ### 3.3 Modularita
 {Konkrétní modularita — generické služby v Core/, EventDispatcher, reusable komponenty, atd.}
 
-### 3.4 UI komponenty (striktní pravidla)
+### 3.4 Překladatelnost (i18n)
+{Konkrétní i18n opatření pro tento plán — pokud plán zahrnuje frontend změny. Pokud ne, napiš "N/A — bez frontend změn".}
+
+- **User-facing stringy** — všechny nové texty v UI používají `t()` (komponenty) nebo `i18n.t()` (non-React moduly). Žádné hardcoded texty.
+- **Translation keys** — hierarchické klíče podle modulu (např. `sites.list.title`, `sites.form.urlLabel`). Přidány do EN i CS JSON souborů paralelně.
+- **Namespaces** — pokud plán zavádí nový modul, vytvořit nový namespace (např. `sites`, `dashboard`) a deklarovat ho v `i18n/config.ts`.
+- **Accessibility** — `aria-label`, `title`, placeholder texty přeloženy přes `t()`.
+- **TypeScript** — `i18next.d.ts` type augmentation projde (build fail na chybějící klíč).
+- **Testy** — `renderWithProviders()` s fixním locale `'en'` pro všechny komponent testy.
+
+### 3.5 UI komponenty (striktní pravidla)
 - **STRIKTNÍ ZÁKAZ vytváření vlastních komponent** — nepoužívat custom CSS ani custom React komponenty pro UI
 - **Používat pouze shadcn/ui komponenty** — instalované přes `shadcn` MCP server nebo CLI
 - **Používat pouze shadcnblocks.com bloky** pro kompozice (Dashboard, Data Table, Chart, Layout)

@@ -48,7 +48,14 @@
 1. **Bezpečnost** — žádné plaintext credentials, šifrování CryptoService, CSRF, input validace
 2. **Rychlost** — indexy na kritických sloupcích, lazy loading, cache, minimální payload
 3. **Modularita** — EventDispatcher komunikace, tenké controllery, generické služby v Core/
+4. **Překladatelnost** — každý user-facing string přes `t()` / `i18n.t()`, žádné hardcoded texty, EN+CS překlady vždy paralelně
 
 ## Skills
 
 Implementační plány se vytvářejí přes skill `implementation-plan` před každou implementací. Všechny skills jsou v `.devin/skills/`.
+
+Každá priorita má vlastní coding skill, který se aplikuje při každém psaní nebo úpravě kódu:
+- `security-coding` — bezpečnost (#1)
+- `performance-coding` — rychlost (#2)
+- `modularity-coding` — modularita (#3)
+- `i18n-coding` — překladatelnost (#4)

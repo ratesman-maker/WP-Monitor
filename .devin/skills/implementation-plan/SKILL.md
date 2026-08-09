@@ -12,7 +12,7 @@ triggers:
 ## Kdy použít
 
 Tento skill se používá PŘED začátkem implementace jakékoliv nové funkce, modulu, refaktoru nebo bugfixu.
-Cílem je zdokumentovat plán vývoje, ověřit reálný stav a zajistit dodržení priorit (bezpečnost, rychlost, modularita).
+Cílem je zdokumentovat plán vývoje, ověřit reálný stav a zajistit dodržení priorit (bezpečnost, rychlost, modularita, překladatelnost).
 
 ## Postup
 
@@ -44,7 +44,7 @@ Vytvoř soubor v `docs/implementation-plans/{YYYY-MM-DD}-{název}.md` s vyplněn
 1. **Metadata** — název, typ, priorita, status, datum, autor, související workflow
 2. **Cíl** — co má být výsledkem
 3. **Reálný stav** — co už existuje (backend, frontend, DB), rozdíl oproti dokumentaci
-4. **Priority (bez výjimek)** — konkrétní bezpečnost, rychlost, modularita opatření
+4. **Priority (bez výjimek)** — konkrétní bezpečnost, rychlost, modularita, překladatelnost opatření
 5. **Architektura** — backend struktura, frontend struktura, DB změny
 6. **API endpointy** — tabulka endpointů (pokud relevantní)
 7. **Kroky implementace** — fáze a checklist kroků
@@ -71,7 +71,7 @@ Status v metadatech by měl být `draft` → po schválení `approved` → při 
 
 Po dokončení implementace a úspěšné validaci proveď post-implementační kontrolu:
 
-- [ ] **Code review** — projdi implementaci podle skillu `code-review` (bezpečnost, rychlost, modularita)
+- [ ] **Code review** — projdi implementaci podle skillu `code-review` (bezpečnost, rychlost, modularita, překladatelnost)
 - [ ] **DB verifikace** — pokud se měnila DB, ověř přes `mcp_server_mysql` (`mysql_query` s `SHOW TABLES`, `DESCRIBE`, `SHOW INDEX`, `SHOW CREATE TABLE`)
 - [ ] **Cross-module impact** — ověř že změna neovlivní ostatní moduly (EventDispatcher eventy, sdílené služby v `Core/` nebo `Shared/`, DB tabulky)
 - [ ] **Environment variables** — pokud se přidaly nové `.env` proměnné, aktualizuj `backend/.env.example` a `docs/12-environment-variables.md`
@@ -80,6 +80,12 @@ Po dokončení implementace a úspěšné validaci proveď post-implementační 
   - Frontend: `npm audit` — bez známých vulnerabilit
   - Verze musí být publikována alespoň 7 dní (nové verze nejsou otestované, riziko supply chain attack)
 - [ ] **Dokumentace** — aktualizuj `docs/` pokud je potřeba (DB schéma, API specifikace, modul specifikace)
+- [ ] **i18n překladatelnost** — pokud plán zahrnuje frontend změny:
+  - Všechny nové user-facing stringy používají `t()` / `i18n.t()` (žádné hardcoded texty)
+  - Nové translation keys přidány do EN i CS JSON souborů paralelně
+  - `aria-label`, `title`, placeholder texty přeloženy
+  - TypeScript type augmentation (`i18next.d.ts`) projde — build fail na chybějící klíč
+  - Testy používají `renderWithProviders()` s fixním locale
 - [ ] **Plán dokončen** — všechny checkboxy v sekci "Kroky implementace" a "Validace" odkrokovány, status `completed`
 
 ### 7. GitHub a changelog
@@ -107,7 +113,7 @@ Po úspěšné post-implementační kontrole:
 
 - **Vždy** vytvoř plán před implementací — bez výjimky
 - **Vždy** ověř reálný stav — nespoléhej na dokumentaci
-- **Vždy** dodrž priority: bezpečnost > rychlost > modularita — bez výjimek
+- **Vždy** dodrž priority: bezpečnost > rychlost > modularita > překladatelnost — bez výjimek
 - **Nikdy** nezačínej implementaci bez schváleného plánu (status `approved`)
 - Plán je živý dokument — aktualizuj ho během implementace
 - Jeden plán = jeden soubor v `docs/implementation-plans/`

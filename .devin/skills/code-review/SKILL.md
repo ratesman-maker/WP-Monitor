@@ -15,6 +15,7 @@ Při review se vždy řídit těmito prioritami v uvedeném pořadí — mají p
 1. **Bezpečnost** — žádné kompromisy. Žádné plaintext credentials, šifrování CryptoService, CSRF, input validace, žádné `eval()`/`exec()`, žádné `dangerouslySetInnerHTML`, žádné interní ID veřejně
 2. **Rychlost** — indexy na kritických sloupcích, minimální payload, HTTP cache headers, lazy loading, žádné N+1 dotazy, WebP
 3. **Modularita** — EventDispatcher komunikace, tenké controllery, generické služby v `Core/` nebo `Shared/`, reusable komponenty v `components/common/`
+4. **Překladatelnost** — každý user-facing string přes `t()` / `i18n.t()`, žádné hardcoded texty, EN+CS překlady paralelně, `aria-label`/`title` přeloženy
 
 ## Kroky
 
@@ -56,6 +57,17 @@ Při review se vždy řídit těmito prioritami v uvedeném pořadí — mají p
    - Frontend: lazy loading, `width`/`height` proti layout shift, TanStack Query caching
    - Obrázky: WebP formát, client-side resize před uploadem
    - Žádné N+1 dotazy
+
+3c. **Kontrola překladatelnosti (i18n, neslevitelná priorita):**
+   - Žádné hardcoded user-facing stringy v komponentách (`<h1>Text</h1>`, `<button>Click</button>`, `placeholder="..."`, `aria-label="..."`, `title="..."`)
+   - Všechny texty používají `t()` (komponenty) nebo `i18n.t()` (non-React moduly jako `api.ts`, `refresh.ts`)
+   - Nové translation keys přidány do EN i CS JSON souborů paralelně (`locales/{en,cs}/{namespace}.json`)
+   - Hierarchické klíče podle modulu (např. `sites.list.title`, ne `msg1`)
+   - `aria-label`, `title`, placeholder texty přeloženy přes `t()`
+   - `<html lang>` sync funguje (automatické přes `i18n.on('languageChanged')` v `config.ts`)
+   - TypeScript type augmentation (`i18next.d.ts`) projde — build fail na chybějící klíč
+   - Nové moduly s UI mají vlastní namespace deklarovaný v `i18n/config.ts`
+   - Testy používají `renderWithProviders()` s fixním locale
 
 4. **Kontrola kvality kódu:**
    - PHP: `declare(strict_types=1)`, type hints, readonly properties
@@ -122,5 +134,5 @@ Při review se vždy řídit těmito prioritami v uvedeném pořadí — mají p
 
 ## Poznámky
 - Bezpečnostní problémy jsou vždy critical — žádné kompromisy
-- Dodržuj pravidlo: "100% zabezpečení, rychlost a modularita — ze kterých nejde slevit"
+- Dodržuj pravidlo: "100% zabezpečení, rychlost, modularita a překladatelnost — ze kterých nejde slevit"
 - Pro vizuální kontrolu frontendu použij `playwright` MCP server (nástroje `browser_navigate`, `browser_take_screenshot`, `browser_console_messages`, `browser_snapshot`)

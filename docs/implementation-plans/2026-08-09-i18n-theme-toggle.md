@@ -7,7 +7,7 @@
 | Název | i18n (EN/CS) + Theme Toggle (Light/Dark) |
 | Typ | funkce |
 | Priorita | P1 |
-| Status | revised |
+| Status | realizováno |
 | Vytvořeno | 09.08.2026 |
 | Autor | Devin (GLM-5.2 High) |
 | Související skill | `.devin/skills/implementation-plan/SKILL.md`, `.devin/skills/security-coding/SKILL.md`, `.devin/skills/performance-coding/SKILL.md` |
@@ -344,3 +344,130 @@ Per `implementation-plan` skill — nejdřív dokumentace (context7 pro react-i1
   - Language: EN → 'CS' (klik = čeština), CS → 'EN' (klik = angličtina)
   - `aria-pressed` doplňuje aktuální stav pro screen readery (WCAG).
 - **Verze:** 0.3.0 (MINOR — nová funkce).
+
+---
+
+## 13. Závěrečná zpráva (realizace)
+
+| Pole | Hodnota |
+|------|---------|
+| Datum realizace | 09.08.2026 |
+| Commit | `0f7d6bc` |
+| Branch | `main` |
+| Push | `c93721a..0f7d6bc main -> main` (origin/main) |
+| Verze | 0.3.0 |
+| Status | **realizováno** |
+
+### 13.1 Co bylo implementováno
+
+**i18n (EN/CS) — react-i18next:**
+- Auto-detect z `navigator.language` (CS browser → CS UI, EN browser → EN UI), fallback `'en'`
+- Manuální přepínač (Single Button), volba uložena v `localStorage 'wpm-lang'`
+- 2 namespaces: `common` (sidebar, errors, toggle labely) + `auth` (login page)
+- `i18next.d.ts` TypeScript type augmentation — build fail na chybějící translation key
+- `<html lang>` sync přes `i18n.on('languageChanged', ...)` (WCAG 3.1.1)
+- `i18next-browser-languagedetector` plugin nepoužit — manuální detekce je triviální pro 2 jazyky, menší bundle, plná kontrola
+
+**Theme toggle (Light/Dark) — next-themes:**
+- `attribute="class"`, `defaultTheme="dark"`, `enableSystem={false}` (binární, žádná System volba)
+- No-flash inline script v `index.html` — nastaví `.light` class na `<html>` před React hydration (prevence FOUC)
+- Volba uložena v `localStorage 'wpm-theme'`
+- Theme palety už existovaly v `globals.css` (`:root` dark, `.light` light) — žádné CSS změny
+
+**Toggle komponenty (vše shadcn, Single Button):**
+- `ThemeToggle` — shadcn `Button` (ghost, icon) s `Sun`/`Moon` ikonou z lucide-react. Ukazuje **cílový** stav (Sun v dark = klik pro light). `aria-pressed` (aktuální stav) + `aria-label` + `title` (přeloženo přes i18n).
+- `LanguageToggle` — shadcn `Button` (ghost, sm) s `Globe` ikonou + kód **cílového** jazyka (`CS` v EN, `EN` v CS). `aria-pressed` + `aria-label` + `title`.
+- `SettingsToggles` — horizontální layout: `LanguageToggle` + shadcn `Separator` (vertical) + `ThemeToggle`. Reusable.
+- Konzistence: oba toggly ukazují cílový stav, `aria-pressed` doplňuje aktuální pro screen readery.
+- Umístěno v Sidebaru (autentizované stránky, pod nav linky, nad Sign out) i na LoginPage (pravý horní roh Card, `absolute top-4 right-4`).
+
+**Providers:**
+- `ThemeProvider` — wrapper kolem next-themes
+- `I18nProvider` — side-effect import `@/i18n/config` (synchronní init, žádný Suspense)
+- `main.tsx` — App obalen v `I18nProvider` → `ThemeProvider` → `QueryClientProvider` → `BrowserRouter`
+
+**Non-React i18n:**
+- `api.ts` používá `i18n.t('error.sessionExpired')` (globální instance) — ne `useTranslation()` hook, protože api.ts není React komponenta
+- `refresh.ts` — bez user-facing stringů, beze změny
+
+**Test infrastruktura:**
+- `renderWithProviders()` + `renderHookWithProviders()` v `src/test/testUtils.tsx` — obalí komponentu v I18n + Theme + QueryClient + Router. Default locale `'en'`, default theme `'dark'`.
+- `window.matchMedia` mock v `src/__tests__/setup.ts` (požadováno next-themes v jsdom)
+- Všechny existující testy aktualizovány na `renderWithProviders` (App, LoginPage, ProtectedRoute, useInitAuth)
+
+### 13.2 Validace (vše prošlo)
+
+| Kontrola | Výsledek |
+|----------|----------|
+| TypeScript (`tsc --noEmit`) | ✅ bez chyb |
+| ESLint | ✅ bez chyb |
+| Frontend testy (vitest) | ✅ 83/83 (bylo 54) |
+| Build (vite build) | ✅ 304KB / 99KB gzip |
+| npm audit | ✅ 0 vulnerabilities |
+| Playwright E2E — auto-detect CS | ✅ browser v CS → UI v češtině |
+| Playwright E2E — theme toggle | ✅ dark↔light, `html class="light"`, bg color změna |
+| Playwright E2E — language toggle | ✅ EN↔CS, `html lang` sync, localStorage |
+| Playwright E2E — persist po reloadu | ✅ theme + jazyk zachovány |
+| Playwright E2E — sidebar toggles | ✅ SettingsToggles v sidebaru po loginu |
+| Playwright E2E — login page toggles | ✅ SettingsToggles viditelné před přihlášením |
+
+### 13.3 Nové soubory
+
+```
+frontend/src/i18n/config.ts                    # i18next init + detection + <html lang> sync
+frontend/src/i18n/i18next.d.ts                 # TypeScript type augmentation
+frontend/src/i18n/index.ts                     # re-export
+frontend/src/i18n/locales/en/common.json       # EN: sidebar, errors, toggle labely
+frontend/src/i18n/locales/en/auth.json         # EN: login page
+frontend/src/i18n/locales/cs/common.json       # CS: překlady
+frontend/src/i18n/locales/cs/auth.json         # CS: překlady
+frontend/src/providers/ThemeProvider.tsx       # next-themes wrapper
+frontend/src/providers/I18nProvider.tsx        # i18next init wrapper
+frontend/src/components/common/ThemeToggle.tsx     # Single Button: Sun↔Moon
+frontend/src/components/common/LanguageToggle.tsx  # Single Button: EN↔CS
+frontend/src/components/common/SettingsToggles.tsx # Layout: Language | Separator | Theme
+frontend/src/test/testUtils.tsx                # renderWithProviders + renderHookWithProviders
+frontend/src/__tests__/components/common/ThemeToggle.test.tsx
+frontend/src/__tests__/components/common/LanguageToggle.test.tsx
+frontend/src/__tests__/components/common/SettingsToggles.test.tsx
+frontend/src/__tests__/i18n/config.test.ts
+```
+
+### 13.4 Změněné soubory
+
+```
+frontend/index.html                            # no-flash script, odstraněn hardcoded class="dark"
+frontend/package.json                          # +i18next, react-i18next, next-themes
+frontend/src/main.tsx                          # App obalen v I18nProvider + ThemeProvider
+frontend/src/App.tsx                           # Sidebar: i18n stringy + SettingsToggles
+frontend/src/modules/auth/pages/LoginPage.tsx  # i18n stringy + SettingsToggles v rohu
+frontend/src/lib/api.ts                        # i18n.t() pro error message
+frontend/src/__tests__/setup.ts                # matchMedia mock
+frontend/src/__tests__/components/App.test.tsx           # renderWithProviders
+frontend/src/__tests__/components/ProtectedRoute.test.tsx # renderWithProviders
+frontend/src/__tests__/modules/auth/hooks/useInitAuth.test.tsx # renderHookWithProviders
+frontend/src/__tests__/modules/auth/pages/LoginPage.test.tsx   # renderWithProviders
+CHANGELOG.md                                   # v0.3.0 záznam (EN)
+CHANGELOG_CS.md                                # v0.3.0 záznam (CS, gitignored)
+```
+
+### 13.5 Dependencies
+
+| Balíček | Verze | Účel |
+|---------|-------|------|
+| `i18next` | ^26.3.6 | i18n core |
+| `react-i18next` | ^17.0.11 | React bindings pro i18next |
+| `next-themes` | ^0.4.6 | Theme management (class na `<html>`, localStorage, no-flash) |
+
+### 13.6 Rozdíly oproti plánu
+
+Žádné funkční rozdíly — plán byl implementován přesně podle specifikace. Drobné implementační detaily:
+- `t('login.title', { ns: 'auth' })` syntax místo `t('auth:login.title')` — TypeScript type augmentation lépe typuje namespace přes options než přes prefix
+- `Separator` s `decorative={true}` (default) nemá `role="separator"` atribut — test hledá přes `data-orientation="vertical"`
+
+### 13.7 Rollback
+
+- `git revert 0f7d6bc` — vše na main branch
+- `docker compose exec frontend npm uninstall i18next react-i18next next-themes`
+- localStorage keys (`wpm-theme`, `wpm-lang`) zůstanou v browseru (neškodí)
+- DB: beze změny
