@@ -19,7 +19,7 @@
         "php-di/php-di": "^7.0",
         "doctrine/dbal": "^4.2",
         "doctrine/migrations": "^3.8",
-        "guzzlehttp/guzzle": "^7.9",
+        "guzzlehttp/guzzle": "^8.0",
         "monolog/monolog": "^3.7",
         "symfony/event-dispatcher": "^7.1",
         "symfony/validator": "^7.1",
