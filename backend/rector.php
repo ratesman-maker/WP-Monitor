@@ -13,7 +13,7 @@ return RectorConfig::configure()
         __DIR__ . '/config',
     ])
     ->withSets([
-        LevelSetList::UP_TO_PHP_83,
+        LevelSetList::UP_TO_PHP_85,
         SetList::CODE_QUALITY,
         SetList::DEAD_CODE,
     ]);

@@ -30,3 +30,4 @@ Thumbs.db
 *.swo
 *~
 .php-cs-fixer.cache
+.migration-backup/

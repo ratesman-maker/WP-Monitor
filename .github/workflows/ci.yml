@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php: ['8.3']
+        php: ['8.5']
 
     # Integration tests require a real MariaDB instance matching the Docker
     # setup (mariadb:11.4). The service is exposed on 127.0.0.1:3306 and the
@@ -50,7 +50,7 @@ jobs:
       LOG_PATH: storage/logs
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -128,10 +128,10 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ['22']
+        node: ['26']
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: ${{ matrix.node }}
           cache: 'npm'
@@ -160,7 +160,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - uses: wagoid/commitlint-github-action@v6

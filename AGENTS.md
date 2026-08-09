@@ -8,11 +8,11 @@
 ## Vývojové prostředí
 
 - **OS:** Linux (Ubuntu 26.04)
-- **PHP:** 8.5.4 (host), 8.3-FPM (Docker)
+- **PHP:** 8.5.4 (host), 8.5-FPM (Docker)
 - **MariaDB:** 11.8.6 (host, port 3307), 11.4 (Docker, port 3306)
-- **Node.js:** 22.23.2
+- **Node.js:** 26.7.0 (Docker)
 - **Docker:** Engine 29.7.2 + Compose v5.4.0
-- **Composer:** 2.10.2
+- **Composer:** 2.10
 
 ## MCP servery (6)
 
@@ -20,6 +20,7 @@
 |--------|------|
 | `mcp_server_mysql` | DB dotazy na host MariaDB (port 3307, db `wp_monitor`, user `wp_monitor`) |
 | `github` | GitHub issues, PRs, repozitáře |
+| `gh` CLI | GitHub Actions runs, PR creation, repo management (`~/.local/bin/gh`, auth via git token) |
 | `playwright` | Vizuální kontrola frontendu (screenshoty, console errors, E2E) |
 | `context7` | Aktuální dokumentace knihoven (React, Slim 4, Doctrine, Vite, Tailwind) |
 | `shadcn` | shadcn/ui komponenty + shadcnblocks.com premium bloky |
