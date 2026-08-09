@@ -1,20 +1,41 @@
+import { QueryClientProvider } from '@tanstack/react-query';
 import { render, renderHook, type RenderOptions } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement, ReactNode } from 'react';
 import { MemoryRouter, type MemoryRouterProps } from 'react-router-dom';
 
+import i18n, { LANGUAGE_STORAGE_KEY } from '@/i18n';
+import { queryClient } from '@/lib/queryClient';
 import { I18nProvider } from '@/providers/I18nProvider';
 import { ThemeProvider } from '@/providers/ThemeProvider';
-import { queryClient } from '@/lib/queryClient';
-import i18n, { LANGUAGE_STORAGE_KEY } from '@/i18n';
+
+const THEME_STORAGE_KEY = 'wpm-theme';
 
 interface RenderWithProvidersOptions extends Omit<RenderOptions, 'wrapper'> {
   /** MemoryRouter initialEntries (defaults to ['/']) */
   routerProps?: MemoryRouterProps;
-  /** Theme to force for the test (defaults to 'dark') */
+  /** Theme to force for the test (defaults to 'dark') — persisted to localStorage so next-themes picks it up */
   theme?: 'dark' | 'light';
   /** Locale to force for the test (defaults to 'en') */
   locale?: 'en' | 'cs';
+}
+
+/**
+ * Apply common provider setup (locale + theme) shared by render* helpers.
+ */
+function applyProviderDefaults(locale: 'en' | 'cs', theme: 'dark' | 'light') {
+  // Force the locale for this test (resets i18n + localStorage)
+  if (i18n.language !== locale) {
+    void i18n.changeLanguage(locale);
+  }
+  localStorage.setItem(LANGUAGE_STORAGE_KEY, locale);
+  // Force the theme — next-themes reads localStorage on mount
+  localStorage.setItem(THEME_STORAGE_KEY, theme);
+  if (theme === 'light') {
+    document.documentElement.classList.add('light');
+  } else {
+    document.documentElement.classList.remove('light');
+  }
 }
 
 /**
@@ -34,22 +55,18 @@ export function renderWithProviders(
   const {
     routerProps = { initialEntries: ['/'] },
     locale = 'en',
-    theme: _theme = 'dark',
+    theme = 'dark',
   } = options;
 
-  // Force the locale for this test (resets i18n + localStorage)
-  if (i18n.language !== locale) {
-    void i18n.changeLanguage(locale);
-  }
-  localStorage.setItem(LANGUAGE_STORAGE_KEY, locale);
+  applyProviderDefaults(locale, theme);
 
   function Wrapper({ children }: { children: ReactNode }) {
     return (
       <I18nProvider>
         <ThemeProvider>
-          <QueryClientProviderWithClient client={queryClient}>
+          <QueryClientProvider client={queryClient}>
             <MemoryRouter {...routerProps}>{children}</MemoryRouter>
-          </QueryClientProviderWithClient>
+          </QueryClientProvider>
         </ThemeProvider>
       </I18nProvider>
     );
@@ -72,37 +89,22 @@ export function renderHookWithProviders<TResult>(
   const {
     routerProps = { initialEntries: ['/'] },
     locale = 'en',
-    theme: _theme = 'dark',
+    theme = 'dark',
   } = options;
 
-  if (i18n.language !== locale) {
-    void i18n.changeLanguage(locale);
-  }
-  localStorage.setItem(LANGUAGE_STORAGE_KEY, locale);
+  applyProviderDefaults(locale, theme);
 
   function Wrapper({ children }: { children: ReactNode }) {
     return (
       <I18nProvider>
         <ThemeProvider>
-          <QueryClientProviderWithClient client={queryClient}>
+          <QueryClientProvider client={queryClient}>
             <MemoryRouter {...routerProps}>{children}</MemoryRouter>
-          </QueryClientProviderWithClient>
+          </QueryClientProvider>
         </ThemeProvider>
       </I18nProvider>
     );
   }
 
   return renderHook(hook, { wrapper: Wrapper });
-}
-
-// Lazy import to avoid circular deps in test setup
-import { QueryClientProvider } from '@tanstack/react-query';
-function QueryClientProviderWithClient({
-  client,
-  children,
-}: {
-  client: typeof queryClient;
-  children: ReactNode;
-}) {
-  return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }

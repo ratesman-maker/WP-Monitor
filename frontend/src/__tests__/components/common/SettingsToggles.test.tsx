@@ -23,10 +23,12 @@ describe('SettingsToggles', () => {
   it('both toggles are clickable (no errors)', async () => {
     const { user } = renderWithProviders(<SettingsToggles />);
     const buttons = screen.getAllByRole('button');
+    expect(buttons).toHaveLength(2);
+    const [languageToggle, themeToggle] = buttons;
     // Click language toggle
-    await user.click(buttons[0]!);
+    await user.click(languageToggle);
     // Click theme toggle
-    await user.click(buttons[1]!);
+    await user.click(themeToggle);
     // No throw = pass
     expect(true).toBe(true);
   });
