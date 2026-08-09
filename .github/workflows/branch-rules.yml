@@ -9,7 +9,7 @@ jobs:
     name: Validate Branch & PR
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Validate branch name
         run: |
           BRANCH="${{ github.head_ref }}"
@@ -80,7 +80,7 @@ jobs:
 
       - name: Apply label
         if: steps.label.outputs.label != ''
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const label = '${{ steps.label.outputs.label }}';
