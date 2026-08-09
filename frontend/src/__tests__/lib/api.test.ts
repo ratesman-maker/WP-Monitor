@@ -1,16 +1,46 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from '@/lib/api';
+import { useAuthStore } from '@/stores/authStore';
 
 // Mock global fetch
 const mockFetch = vi.fn();
 vi.stubGlobal('fetch', mockFetch);
 
+// Mock the refresh module so the interceptor can be tested in isolation.
+const mockRefreshAccessToken = vi.fn();
+vi.mock('@/modules/auth/lib/refresh', () => ({
+  refreshAccessToken: () => mockRefreshAccessToken(),
+  isRefreshing: () => false,
+}));
+
 function jsonResponse(data: unknown, status = 200): Response {
+  const body = typeof data === 'string' ? data : JSON.stringify(data);
   return {
     ok: status >= 200 && status < 300,
     status,
     json: () => Promise.resolve(data),
+    text: () => Promise.resolve(body),
+    headers: new Headers(),
+  } as Response;
+}
+
+function noContentResponse(status = 204): Response {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    json: () => Promise.resolve(null),
+    text: () => Promise.resolve(''),
+    headers: new Headers(),
+  } as Response;
+}
+
+function errorResponse(status: number, message: string): Response {
+  return {
+    ok: false,
+    status,
+    json: () => Promise.resolve({ message }),
+    text: () => Promise.resolve(JSON.stringify({ message })),
     headers: new Headers(),
   } as Response;
 }
@@ -18,6 +48,15 @@ function jsonResponse(data: unknown, status = 200): Response {
 describe('api client', () => {
   afterEach(() => {
     mockFetch.mockReset();
+    mockRefreshAccessToken.mockReset();
+    useAuthStore.setState({
+      user: null,
+      token: null,
+      refreshToken: null,
+      csrfToken: null,
+      sessionId: null,
+      isAuthenticated: false,
+    });
   });
 
   describe('get', () => {
@@ -37,12 +76,7 @@ describe('api client', () => {
     });
 
     it('throws on non-ok response', async () => {
-      mockFetch.mockResolvedValue({
-        ok: false,
-        status: 500,
-        json: () => Promise.resolve({ message: 'Server error' }),
-        headers: new Headers(),
-      } as Response);
+      mockFetch.mockResolvedValue(errorResponse(500, 'Server error'));
       await expect(api.get('/fail')).rejects.toThrow('Server error');
     });
   });
@@ -83,7 +117,7 @@ describe('api client', () => {
 
   describe('delete', () => {
     it('sends DELETE request', async () => {
-      mockFetch.mockResolvedValue(jsonResponse(null, 204));
+      mockFetch.mockResolvedValue(noContentResponse(204));
       await api.delete('/sites/1');
       expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost:8080/api/sites/1',
@@ -92,7 +126,7 @@ describe('api client', () => {
     });
 
     it('returns undefined for 204 No Content', async () => {
-      mockFetch.mockResolvedValue(jsonResponse(null, 204));
+      mockFetch.mockResolvedValue(noContentResponse(204));
       const result = await api.delete('/sites/1');
       expect(result).toBeUndefined();
     });
@@ -119,6 +153,71 @@ describe('api client', () => {
         'https://external.com/api/data',
         expect.objectContaining({ method: 'GET' }),
       );
+    });
+  });
+
+  describe('401 refresh interceptor', () => {
+    it('refreshes and retries on 401', async () => {
+      // First call returns 401, second (retry) returns 200
+      mockFetch
+        .mockResolvedValueOnce(errorResponse(401, 'Unauthorized'))
+        .mockResolvedValueOnce(jsonResponse({ data: 'success' }));
+      mockRefreshAccessToken.mockResolvedValue('new-token-456');
+
+      const result = await api.get('/sites', { token: 'expired-token' });
+
+      expect(mockRefreshAccessToken).toHaveBeenCalledTimes(1);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      // Retry must use the new token from the refresh
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        2,
+        'http://localhost:8080/api/sites',
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: 'Bearer new-token-456' }),
+        }),
+      );
+      expect(result).toEqual({ data: 'success' });
+    });
+
+    it('throws "Session expired" when refresh fails', async () => {
+      mockFetch.mockResolvedValueOnce(errorResponse(401, 'Unauthorized'));
+      mockRefreshAccessToken.mockResolvedValue(null); // refresh failed
+
+      await expect(api.get('/sites', { token: 'expired' })).rejects.toThrow('Session expired');
+      expect(mockFetch).toHaveBeenCalledTimes(1); // no retry
+    });
+
+    it('does not attempt refresh for /auth/refresh endpoint', async () => {
+      mockFetch.mockResolvedValueOnce(errorResponse(401, 'Unauthorized'));
+
+      await expect(api.post('/auth/refresh')).rejects.toThrow('Unauthorized');
+      expect(mockRefreshAccessToken).not.toHaveBeenCalled();
+    });
+
+    it('does not attempt refresh for /auth/login endpoint', async () => {
+      mockFetch.mockResolvedValueOnce(errorResponse(401, 'Unauthorized'));
+
+      await expect(api.post('/auth/login', { username: 'x', password: 'y' })).rejects.toThrow('Unauthorized');
+      expect(mockRefreshAccessToken).not.toHaveBeenCalled();
+    });
+
+    it('does not attempt refresh for /auth/setup endpoint', async () => {
+      mockFetch.mockResolvedValueOnce(errorResponse(401, 'Unauthorized'));
+
+      await expect(api.post('/auth/setup', { username: 'x', password: 'y' })).rejects.toThrow('Unauthorized');
+      expect(mockRefreshAccessToken).not.toHaveBeenCalled();
+    });
+
+    it('retries only once (no infinite loop)', async () => {
+      // Both the first and retry return 401 — must not loop
+      mockFetch
+        .mockResolvedValueOnce(errorResponse(401, 'Unauthorized'))
+        .mockResolvedValueOnce(errorResponse(401, 'Unauthorized'));
+      mockRefreshAccessToken.mockResolvedValue('new-token');
+
+      await expect(api.get('/sites', { token: 'expired' })).rejects.toThrow('Unauthorized');
+      expect(mockFetch).toHaveBeenCalledTimes(2); // original + 1 retry
+      expect(mockRefreshAccessToken).toHaveBeenCalledTimes(1);
     });
   });
 });

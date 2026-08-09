@@ -1,8 +1,12 @@
 # Devin — lokální konfigurace (obsahuje tajné údaje, gitignored)
 .devin/mcp_config.local.json
+.devin/config.local.json
 
 # Changelog — česká verze (lokální, necommitovat)
 CHANGELOG_CS.md
+
+# Playwright MCP — lokální screenshoty a logy
+.playwright-mcp/
 
 # Docker — lokální data
 docker-data/

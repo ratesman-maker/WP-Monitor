@@ -1,0 +1,131 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Seed an initial admin user for WP Monitor.
+ *
+ * Usage:
+ *   php bin/seed                                      # interactive prompt
+ *   php bin/seed --username=admin --password=...      # non-interactive
+ *   php bin/seed --username=admin --password=... --email=admin@example.com
+ *
+ * The script:
+ *   1. Generates a 16-byte per-user salt
+ *   2. Derives a 32-byte encryption key via Argon2id (sensitive profile)
+ *   3. Encrypts a known verification token ("WPMONITOR_VERIFY") with the key
+ *   4. Stores the user in the `users` table
+ *
+ * The master password is NEVER stored — only the salt and the encrypted
+ * verification token. At login, the password is re-derived and the token is
+ * decrypted to verify correctness.
+ */
+
+use Doctrine\DBAL\DriverManager;
+use WPMonitor\Security\CryptoService;
+use WPMonitor\Security\KeyDerivationService;
+
+require __DIR__ . '/../vendor/autoload.php';
+
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
+$dotenv->safeLoad();
+
+// Parse CLI args
+$options = getopt('', ['username:', 'password:', 'email:']);
+$username = $options['username'] ?? null;
+$password = $options['password'] ?? null;
+$email = $options['email'] ?? null;
+
+if ($username === null || $password === null) {
+    // Interactive mode
+    echo "WP Monitor — admin user setup\n";
+    echo "=============================\n\n";
+
+    if ($username === null) {
+        echo "Username (3-50 chars): ";
+        $username = trim((string) fgets(STDIN));
+        if ($username === '' || strlen($username) < 3 || strlen($username) > 50) {
+            echo "ERROR: Username must be 3-50 characters.\n";
+            exit(1);
+        }
+    }
+
+    if ($password === null) {
+        echo "Master password (min 12 chars, hidden): ";
+        system('stty -echo');
+        $password = trim((string) fgets(STDIN));
+        system('stty echo');
+        echo "\n";
+        if (strlen($password) < 12) {
+            echo "ERROR: Master password must be at least 12 characters.\n";
+            exit(1);
+        }
+    }
+}
+
+if (strlen($username) < 3 || strlen($username) > 50) {
+    echo "ERROR: Username must be 3-50 characters.\n";
+    exit(1);
+}
+
+if (strlen($password) < 12) {
+    echo "ERROR: Master password must be at least 12 characters.\n";
+    exit(1);
+}
+
+// Connect to DB
+$connection = DriverManager::getConnection([
+    'dbname' => $_ENV['DB_NAME'] ?? 'wp_monitor',
+    'user' => $_ENV['DB_USER'] ?? 'root',
+    'password' => $_ENV['DB_PASSWORD'] ?? '',
+    'host' => $_ENV['DB_HOST'] ?? '127.0.0.1',
+    'port' => (int) ($_ENV['DB_PORT'] ?? 3306),
+    'driver' => 'pdo_mysql',
+    'charset' => $_ENV['DB_CHARSET'] ?? 'utf8mb4',
+]);
+
+// Check if username already exists
+$existing = $connection->executeQuery(
+    'SELECT id FROM users WHERE username = ?',
+    [$username]
+)->fetchOne();
+
+if ($existing !== false) {
+    echo "ERROR: User '$username' already exists (id=$existing).\n";
+    exit(1);
+}
+
+// Derive key and create verification token
+$derivation = new KeyDerivationService();
+$salt = KeyDerivationService::generateSalt();
+$key = $derivation->deriveKey($password, $salt, KeyDerivationService::PROFILE_INTERACTIVE);
+
+$crypto = new CryptoService($key);
+$verificationPlaintext = 'WPMONITOR_VERIFY';
+$verificationAad = pack('NN', 0, 0); // no site/user binding for verification token
+$verificationToken = $crypto->encrypt($verificationPlaintext, $verificationAad);
+
+// Insert admin user
+$connection->executeStatement(
+    'INSERT INTO users (username, email, role, password_salt, verification_token, verification_aad, is_active)
+     VALUES (?, ?, ?, ?, ?, ?, 1)',
+    [
+        $username,
+        $email,
+        'admin',
+        $salt,
+        $verificationToken,
+        $verificationAad,
+    ]
+);
+
+$userId = (int) $connection->lastInsertId();
+echo "\nAdmin user created successfully:\n";
+echo "  ID:       $userId\n";
+echo "  Username: $username\n";
+if ($email !== null) {
+    echo "  Email:    $email\n";
+}
+echo "  Role:     admin\n";
+echo "\nYou can now log in to WP Monitor with these credentials.\n";

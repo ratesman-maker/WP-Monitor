@@ -11,8 +11,9 @@ services:
       MARIADB_AUTO_UPGRADE: "true"
     volumes:
       - db-data:/var/lib/mysql
-    ports:
-      - "3307:3306"
+    # No host port mapping — app connects via docker network (hostname: db).
+    # Host MariaDB already uses 3307; Docker DB is reachable via
+    # `docker compose exec db mariadb` for debugging.
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 5s

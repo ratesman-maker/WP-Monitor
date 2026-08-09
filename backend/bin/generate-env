@@ -1,0 +1,64 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Generate a backend/.env file with cryptographically secure values.
+ *
+ * Usage:
+ *   php bin/generate-env              # writes backend/.env if it does not exist
+ *   php bin/generate-env --force      # overwrites existing backend/.env
+ *
+ * Generated values:
+ *   - APP_KEY: 32 random bytes, base64-encoded (prefixed with "base64:")
+ *   - BACKUP_ENCRYPTION_KEY: 32 random bytes, base64-encoded
+ *   - MASTER_PASSWORD_SALT: 16 random bytes, base64-encoded
+ */
+
+require __DIR__ . '/../vendor/autoload.php';
+
+$envPath = __DIR__ . '/../.env';
+$force = in_array('--force', $argv ?? [], true);
+
+if (file_exists($envPath) && !$force) {
+    echo "backend/.env already exists. Use --force to overwrite.\n";
+    exit(1);
+}
+
+$examplePath = __DIR__ . '/../.env.example';
+if (!file_exists($examplePath)) {
+    echo "ERROR: .env.example not found at $examplePath\n";
+    exit(1);
+}
+
+$example = file_get_contents($examplePath) ?: '';
+if ($example === '') {
+    echo "ERROR: .env.example is empty.\n";
+    exit(1);
+}
+
+$appKey = 'base64:' . base64_encode(random_bytes(32));
+$backupKey = 'base64:' . base64_encode(random_bytes(32));
+$masterSalt = base64_encode(random_bytes(16));
+
+$replacements = [
+    'APP_KEY=base64:REPLACE_WITH_GENERATED_KEY' => "APP_KEY=$appKey",
+    'BACKUP_ENCRYPTION_KEY=base64:REPLACE_WITH_GENERATED_KEY' => "BACKUP_ENCRYPTION_KEY=$backupKey",
+    'MASTER_PASSWORD_SALT=CHANGE_ME_16_BYTES' => "MASTER_PASSWORD_SALT=$masterSalt",
+    'DB_HOST=127.0.0.1' => 'DB_HOST=db',
+    'DB_PASSWORD=CHANGE_ME' => 'DB_PASSWORD=secret',
+];
+
+$envContent = strtr($example, $replacements);
+
+if (file_put_contents($envPath, $envContent) === false) {
+    echo "ERROR: Failed to write $envPath\n";
+    exit(1);
+}
+
+echo "Generated backend/.env with secure random values:\n";
+echo "  APP_KEY:                $appKey\n";
+echo "  BACKUP_ENCRYPTION_KEY:  $backupKey\n";
+echo "  MASTER_PASSWORD_SALT:   $masterSalt\n";
+echo "\nReview and adjust DB credentials and CORS origins as needed.\n";
