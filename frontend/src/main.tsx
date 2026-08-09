@@ -5,6 +5,8 @@ import { BrowserRouter } from 'react-router-dom';
 
 import App from './App';
 import { queryClient } from './lib/queryClient';
+import { I18nProvider } from './providers/I18nProvider';
+import { ThemeProvider } from './providers/ThemeProvider';
 import './styles/globals.css';
 
 const root = document.getElementById('root');
@@ -14,10 +16,14 @@ if (root === null) {
 
 ReactDOM.createRoot(root).render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    </QueryClientProvider>
+    <I18nProvider>
+      <ThemeProvider>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </QueryClientProvider>
+      </ThemeProvider>
+    </I18nProvider>
   </React.StrictMode>
 );

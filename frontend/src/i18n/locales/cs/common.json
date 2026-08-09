@@ -1,0 +1,37 @@
+{
+  "app": {
+    "name": "WP Monitor"
+  },
+  "sidebar": {
+    "dashboard": "Přehled",
+    "sites": "Weby",
+    "settings": "Nastavení",
+    "signOut": "Odhlásit se",
+    "signingOut": "Odhlašování..."
+  },
+  "dashboard": {
+    "comingSoon": "Přehled — brzy"
+  },
+  "sites": {
+    "comingSoon": "Weby — brzy"
+  },
+  "settings": {
+    "comingSoon": "Nastavení — brzy"
+  },
+  "theme": {
+    "toggleAria": "Přepnout na {{target}} režim",
+    "toggleTitle": "Přepnout na {{target}} režim",
+    "light": "světlý",
+    "dark": "tmavý"
+  },
+  "language": {
+    "toggleAria": "Přepnout na {{target}}",
+    "toggleTitle": "Přepnout na {{target}}",
+    "english": "English",
+    "czech": "Čeština"
+  },
+  "error": {
+    "sessionExpired": "Relace vypršela",
+    "loginFailed": "Přihlášení selhalo."
+  }
+}

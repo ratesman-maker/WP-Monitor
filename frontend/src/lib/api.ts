@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { refreshAccessToken } from '@/modules/auth/lib/refresh';
 
 const API_URL = (window.__ENV__?.VITE_API_URL ?? import.meta.env.VITE_API_URL) + '';
@@ -63,7 +64,7 @@ async function apiRequest<T>(
       return parseResponse<T>(retryResponse, endpoint);
     }
     // Refresh failed — refreshAccessToken already cleared the store.
-    throw new Error('Session expired.');
+    throw new Error(i18n.t('error.sessionExpired'));
   }
 
   return parseResponse<T>(response, endpoint);

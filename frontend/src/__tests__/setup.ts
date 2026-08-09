@@ -7,6 +7,21 @@ import { cleanup } from '@testing-library/react';
   VITE_API_URL: 'http://localhost:8080/api',
 };
 
+// Mock window.matchMedia — required by next-themes (and other libraries that
+// check prefers-color-scheme). jsdom does not implement it natively.
+if (!window.matchMedia) {
+  window.matchMedia = (query: string): MediaQueryList => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  });
+}
+
 // Auto-cleanup RTL after each test
 afterEach(() => {
   cleanup();

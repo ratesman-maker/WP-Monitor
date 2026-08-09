@@ -1,23 +1,12 @@
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { screen } from '@testing-library/react';
 import { describe, expect, it, beforeEach } from 'vitest';
 
 import App from '@/App';
 import { useAuthStore } from '@/stores/authStore';
+import { renderWithProviders } from '@/test/testUtils';
 
 function renderApp(initialRoute = '/') {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
-  });
-
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[initialRoute]}>
-        <App />
-      </MemoryRouter>
-    </QueryClientProvider>,
-  );
+  return renderWithProviders(<App />, { routerProps: { initialEntries: [initialRoute] } });
 }
 
 describe('App', () => {
@@ -43,6 +32,14 @@ describe('App', () => {
       renderApp('/login');
       expect(screen.getByLabelText(/username/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/master password/i)).toBeInTheDocument();
+    });
+
+    it('renders SettingsToggles on login page (accessible before auth)', () => {
+      renderApp('/login');
+      // SettingsToggles renders 2 buttons (language + theme)
+      const buttons = screen.getAllByRole('button');
+      // "Sign in" submit button + 2 toggle buttons = 3 total
+      expect(buttons.length).toBeGreaterThanOrEqual(3);
     });
   });
 
@@ -91,6 +88,33 @@ describe('App', () => {
     it('renders Settings content on /settings route', () => {
       renderApp('/settings');
       expect(screen.getByText('Settings — coming soon')).toBeInTheDocument();
+    });
+
+    it('renders SettingsToggles in sidebar when authenticated', () => {
+      renderApp();
+      // Sidebar contains the toggles (2 buttons) + Sign out button
+      const buttons = screen.getAllByRole('button');
+      expect(buttons.length).toBeGreaterThanOrEqual(3);
+    });
+  });
+
+  describe('i18n — CS locale', () => {
+    beforeEach(() => {
+      useAuthStore.setState({
+        isAuthenticated: true,
+        user: { id: 1, username: 'admin', role: 'admin' },
+        token: 'test-token',
+        refreshToken: 'test-refresh',
+        csrfToken: 'test-csrf',
+        sessionId: 'test-session',
+      });
+    });
+
+    it('renders translated sidebar links in CS', () => {
+      renderWithProviders(<App />, { locale: 'cs' });
+      expect(screen.getByRole('link', { name: 'Přehled' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Weby' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Nastavení' })).toBeInTheDocument();
     });
   });
 });

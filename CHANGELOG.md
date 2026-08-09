@@ -5,6 +5,59 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] — 09.08.2026
+
+### Added
+- i18n (internationalization) with react-i18next: English + Czech UI translations
+  with auto-detect from `navigator.language` and manual toggle. Language choice
+  persisted to `localStorage` (`wpm-lang`).
+- Theme toggle (Light/Dark) with next-themes: binary switch, dark default
+  (matches `globals.css` `:root`), light via `.light` class. Theme persisted to
+  `localStorage` (`wpm-theme`). No-flash inline script in `index.html` sets the
+  theme class on `<html>` before React hydration (prevents FOUC).
+- `SettingsToggles` component (shadcn `Button` + `Separator`): horizontal layout
+  combining `LanguageToggle` + `ThemeToggle`. Rendered in the Sidebar
+  (authenticated pages) and on the LoginPage (accessible before login).
+- `ThemeToggle` — Single `Button` (ghost, icon size) with Sun/Moon icon from
+  lucide-react. Shows TARGET state (Sun in dark = click for light). `aria-pressed`
+  reflects current state, `aria-label` + `title` translated via i18n.
+- `LanguageToggle` — Single `Button` (ghost, sm) with Globe icon + target
+  language code (`CS` when in EN, `EN` when in CS). `aria-pressed` + `aria-label`
+  + `title` for accessibility.
+- i18n module: `src/i18n/config.ts` (init, detection, `<html lang>` sync via
+  `languageChanged` event for WCAG 3.1.1), `src/i18n/i18next.d.ts` (TypeScript
+  type augmentation — build fails on missing translation keys), translation
+  files `locales/{en,cs}/{common,auth}.json`.
+- `ThemeProvider` + `I18nProvider` wrappers in `src/providers/`.
+- `renderWithProviders()` + `renderHookWithProviders()` test helpers in
+  `src/test/testUtils.tsx` — wraps components in I18n + Theme + QueryClient +
+  Router for testing. Default locale `'en'`, default theme `'dark'`.
+- `window.matchMedia` mock in test setup (required by next-themes in jsdom).
+- Frontend test suite: 83 tests (was 54) — added ThemeToggle, LanguageToggle,
+  SettingsToggles, i18n config tests; updated App, LoginPage, ProtectedRoute,
+  useInitAuth tests to use `renderWithProviders`.
+
+### Changed
+- `main.tsx` — App wrapped in `I18nProvider` + `ThemeProvider` (outermost
+  providers, before QueryClientProvider + BrowserRouter).
+- `index.html` — removed hardcoded `class="dark"` from `<html>`, added no-flash
+  inline script that reads `localStorage 'wpm-theme'` and sets `.light` class
+  if needed (dark is default, no class needed).
+- `App.tsx` Sidebar — all strings now use `t()` (i18n), `SettingsToggles`
+  added below nav links, above Sign out.
+- `LoginPage.tsx` — all strings use `t()` with `auth` namespace,
+  `SettingsToggles` in top-right corner (absolute positioning).
+- `api.ts` — error message "Session expired" now uses `i18n.t()` (global
+  instance, not `useTranslation()` hook — api.ts is not a React component).
+- Test setup — `matchMedia` mock added for next-themes compatibility in jsdom.
+
+### Security
+- No new security concerns — i18n and theme are purely frontend, no user input
+  in translation keys, `react-i18next` escapes by default (React), no
+  `dangerouslySetInnerHTML`.
+- `localStorage` used only for non-sensitive preferences (`'dark'|'light'`,
+  `'en'|'cs'`) — no tokens or user data.
+
 ## [0.2.0] — 09.08.2026
 
 ### Added

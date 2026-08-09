@@ -7,7 +7,7 @@
 | Název | Auth Persistence & Refresh Interceptor (httpOnly cookie) |
 | Typ | funkce |
 | Priorita | P1 |
-| Status | in-progress |
+| Status | completed |
 | Vytvořeno | 09.08.2026 |
 | Autor | Devin (GLM-5.2 High) |
 | Související skill | `.devin/skills/security-coding/SKILL.md`, `.devin/skills/implementation-plan/SKILL.md` |

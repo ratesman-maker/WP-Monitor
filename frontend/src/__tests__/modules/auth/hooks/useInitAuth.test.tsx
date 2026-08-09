@@ -1,8 +1,9 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import { useInitAuth } from '@/modules/auth/hooks/useInitAuth';
 import { useAuthStore } from '@/stores/authStore';
+import { renderHookWithProviders } from '@/test/testUtils';
 
 // Mock the refresh module so we don't hit the network
 const mockRefreshAccessToken = vi.fn();
@@ -27,7 +28,7 @@ describe('useInitAuth', () => {
 
   it('does not attempt refresh when no user is present', () => {
     useAuthStore.setState({ user: null, token: null });
-    const { result } = renderHook(() => useInitAuth());
+    const { result } = renderHookWithProviders(() => useInitAuth());
     expect(mockRefreshAccessToken).not.toHaveBeenCalled();
     expect(result.current.isInitializing).toBe(false);
   });
@@ -38,7 +39,7 @@ describe('useInitAuth', () => {
       token: 'existing-token',
       isAuthenticated: true,
     });
-    const { result } = renderHook(() => useInitAuth());
+    const { result } = renderHookWithProviders(() => useInitAuth());
     expect(mockRefreshAccessToken).not.toHaveBeenCalled();
     expect(result.current.isInitializing).toBe(false);
   });
@@ -57,7 +58,7 @@ describe('useInitAuth', () => {
       }),
     );
 
-    const { result } = renderHook(() => useInitAuth());
+    const { result } = renderHookWithProviders(() => useInitAuth());
     // Must be true on the very first render (synchronous) — before any effect runs
     expect(result.current.isInitializing).toBe(true);
     expect(mockRefreshAccessToken).toHaveBeenCalledTimes(1);
@@ -73,7 +74,7 @@ describe('useInitAuth', () => {
     });
     mockRefreshAccessToken.mockResolvedValue('new-token');
 
-    const { result } = renderHook(() => useInitAuth());
+    const { result } = renderHookWithProviders(() => useInitAuth());
     expect(result.current.isInitializing).toBe(true);
 
     await waitFor(() => {
@@ -89,7 +90,7 @@ describe('useInitAuth', () => {
     });
     mockRefreshAccessToken.mockResolvedValue(null);
 
-    const { result } = renderHook(() => useInitAuth());
+    const { result } = renderHookWithProviders(() => useInitAuth());
     expect(result.current.isInitializing).toBe(true);
 
     await waitFor(() => {
@@ -104,7 +105,7 @@ describe('useInitAuth', () => {
       isAuthenticated: false,
     });
     mockRefreshAccessToken.mockResolvedValue('new-token');
-    const { result } = renderHook(() => useInitAuth());
+    const { result } = renderHookWithProviders(() => useInitAuth());
     expect(result.current.isAuthenticated).toBe(false);
   });
 });

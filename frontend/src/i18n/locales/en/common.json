@@ -1,0 +1,37 @@
+{
+  "app": {
+    "name": "WP Monitor"
+  },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "sites": "Sites",
+    "settings": "Settings",
+    "signOut": "Sign out",
+    "signingOut": "Signing out..."
+  },
+  "dashboard": {
+    "comingSoon": "Dashboard — coming soon"
+  },
+  "sites": {
+    "comingSoon": "Sites — coming soon"
+  },
+  "settings": {
+    "comingSoon": "Settings — coming soon"
+  },
+  "theme": {
+    "toggleAria": "Switch to {{target}} mode",
+    "toggleTitle": "Switch to {{target}} mode",
+    "light": "light",
+    "dark": "dark"
+  },
+  "language": {
+    "toggleAria": "Switch to {{target}}",
+    "toggleTitle": "Switch to {{target}}",
+    "english": "English",
+    "czech": "Čeština"
+  },
+  "error": {
+    "sessionExpired": "Session expired",
+    "loginFailed": "Login failed."
+  }
+}

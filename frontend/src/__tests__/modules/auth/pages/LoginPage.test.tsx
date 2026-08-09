@@ -1,11 +1,9 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { screen } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import LoginPage from '@/modules/auth/pages/LoginPage';
 import { useAuthStore } from '@/stores/authStore';
+import { renderWithProviders } from '@/test/testUtils';
 
 // Mock the useLogin hook so we don't need a real API
 vi.mock('@/modules/auth/hooks/useLogin', () => ({
@@ -16,17 +14,7 @@ vi.mock('@/modules/auth/hooks/useLogin', () => ({
 }));
 
 function renderLoginPage() {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
-  });
-
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
-        <LoginPage />
-      </MemoryRouter>
-    </QueryClientProvider>,
-  );
+  return renderWithProviders(<LoginPage />);
 }
 
 describe('LoginPage', () => {
@@ -57,9 +45,16 @@ describe('LoginPage', () => {
     expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
   });
 
-  it('shows error when submitting empty fields', async () => {
-    const user = userEvent.setup();
+  it('renders SettingsToggles (accessible before auth)', () => {
     renderLoginPage();
+    // SettingsToggles renders 2 buttons (language + theme)
+    // Plus the "Sign in" submit button = 3 total
+    const buttons = screen.getAllByRole('button');
+    expect(buttons.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('shows error when submitting empty fields', async () => {
+    const { user } = renderLoginPage();
 
     await user.click(screen.getByRole('button', { name: /sign in/i }));
 
@@ -67,8 +62,7 @@ describe('LoginPage', () => {
   });
 
   it('allows typing into username and password fields', async () => {
-    const user = userEvent.setup();
-    renderLoginPage();
+    const { user } = renderLoginPage();
 
     const usernameInput = screen.getByLabelText(/username/i);
     const passwordInput = screen.getByLabelText(/master password/i);
@@ -78,5 +72,10 @@ describe('LoginPage', () => {
 
     expect(usernameInput).toHaveValue('admin');
     expect(passwordInput).toHaveValue('password123');
+  });
+
+  it('renders translated title in CS locale', () => {
+    renderWithProviders(<LoginPage />, { locale: 'cs' });
+    expect(screen.getByText('Přihlaste se ke svému účtu pro pokračování.')).toBeInTheDocument();
   });
 });

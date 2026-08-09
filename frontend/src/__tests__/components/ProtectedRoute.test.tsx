@@ -1,25 +1,25 @@
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { screen } from '@testing-library/react';
+import { Route, Routes } from 'react-router-dom';
 import { describe, expect, it, beforeEach } from 'vitest';
 
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useAuthStore } from '@/stores/authStore';
+import { renderWithProviders } from '@/test/testUtils';
 
 function renderProtectedRoute(initialRoute = '/protected', isInitializing = false) {
-  return render(
-    <MemoryRouter initialEntries={[initialRoute]}>
-      <Routes>
-        <Route path="/login" element={<div>Login Page</div>} />
-        <Route
-          path="/protected"
-          element={
-            <ProtectedRoute isInitializing={isInitializing}>
-              <div>Protected Content</div>
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
-    </MemoryRouter>,
+  return renderWithProviders(
+    <Routes>
+      <Route path="/login" element={<div>Login Page</div>} />
+      <Route
+        path="/protected"
+        element={
+          <ProtectedRoute isInitializing={isInitializing}>
+            <div>Protected Content</div>
+          </ProtectedRoute>
+        }
+      />
+    </Routes>,
+    { routerProps: { initialEntries: [initialRoute] } },
   );
 }
 
@@ -72,8 +72,6 @@ describe('ProtectedRoute', () => {
     // Loading skeleton is shown — neither login nor protected content
     expect(screen.queryByText('Login Page')).not.toBeInTheDocument();
     expect(screen.queryByText('Protected Content')).not.toBeInTheDocument();
-    // Skeleton renders elements with role="status" or just empty divs —
-    // verify no redirect happened by checking login page is absent
   });
 
   it('redirects to login when initializing without a user', () => {
