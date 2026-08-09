@@ -13,6 +13,42 @@ jobs:
     strategy:
       matrix:
         php: ['8.3']
+
+    # Integration tests require a real MariaDB instance matching the Docker
+    # setup (mariadb:11.4). The service is exposed on 127.0.0.1:3306 and the
+    # test bootstrap reads DB_* env vars (defaults point at "db" which only
+    # exists inside the Docker network, so we override them for CI).
+    services:
+      db:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: wp_monitor
+          MARIADB_USER: wp_monitor
+          MARIADB_PASSWORD: secret
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    env:
+      APP_ENV: testing
+      APP_DEBUG: 'true'
+      APP_KEY: 'base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA='
+      APP_URL: 'http://localhost:8080'
+      DB_HOST: 127.0.0.1
+      DB_PORT: '3306'
+      DB_NAME: wp_monitor
+      DB_USER: wp_monitor
+      DB_PASSWORD: secret
+      DB_CHARSET: utf8mb4
+      JWT_ISSUER: wp-monitor
+      LOG_LEVEL: warning
+      LOG_PATH: storage/logs
+
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
@@ -29,6 +65,22 @@ jobs:
       - name: PHP-CS-Fixer
         working-directory: backend
         run: composer cs-check
+      - name: Wait for MariaDB
+        working-directory: backend
+        run: |
+          for i in $(seq 1 30); do
+            if php -r "try { new PDO('mysql:host=127.0.0.1;port=3306', 'wp_monitor', 'secret'); exit(0); } catch (\Throwable \$e) { exit(1); }"; then
+              echo "MariaDB is ready."
+              exit 0
+            fi
+            echo "Waiting for MariaDB... ($i/30)"
+            sleep 2
+          done
+          echo "MariaDB did not become ready in time." >&2
+          exit 1
+      - name: Run migrations
+        working-directory: backend
+        run: php bin/migrate
       - name: PHPUnit
         working-directory: backend
         run: composer test
