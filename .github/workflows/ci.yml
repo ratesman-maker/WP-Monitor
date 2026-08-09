@@ -78,6 +78,35 @@ jobs:
           done
           echo "MariaDB did not become ready in time." >&2
           exit 1
+      # The app and tests load configuration via Dotenv from backend/.env
+      # (the file is git-ignored and normally created by `bin/generate-env`
+      # or mounted from the Docker environment). PHP's default
+      # variables_order=GPCS does NOT populate $_ENV from the process
+      # environment, so the GitHub Actions `env:` block is invisible to
+      # $_ENV['DB_*'] lookups. We therefore materialize a .env file so the
+      # CI runs mirror the Docker/production setup exactly.
+      - name: Create .env for CI
+        working-directory: backend
+        run: |
+          {
+            echo "APP_ENV=testing"
+            echo "APP_DEBUG=true"
+            echo "APP_KEY=${{ env.APP_KEY }}"
+            echo "APP_URL=${{ env.APP_URL }}"
+            echo "APP_VERSION=0.1.0"
+            echo "DB_HOST=${{ env.DB_HOST }}"
+            echo "DB_PORT=${{ env.DB_PORT }}"
+            echo "DB_NAME=${{ env.DB_NAME }}"
+            echo "DB_USER=${{ env.DB_USER }}"
+            echo "DB_PASSWORD=${{ env.DB_PASSWORD }}"
+            echo "DB_CHARSET=utf8mb4"
+            echo "JWT_ISSUER=${{ env.JWT_ISSUER }}"
+            echo "LOG_LEVEL=${{ env.LOG_LEVEL }}"
+            echo "LOG_PATH=${{ env.LOG_PATH }}"
+            echo "CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:8080"
+            echo "CORS_ALLOWED_METHODS=GET,POST,PUT,DELETE,OPTIONS"
+            echo "CORS_ALLOWED_HEADERS=Content-Type,Authorization,X-CSRF-Token"
+          } > .env
       - name: Run migrations
         working-directory: backend
         run: php bin/migrate
