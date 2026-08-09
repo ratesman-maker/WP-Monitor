@@ -56,6 +56,12 @@ jobs:
           php-version: ${{ matrix.php }}
           extensions: openssl, sodium, mbstring, intl, curl, pdo_mysql, xml, zip, gd
           coverage: xdebug
+          # PHP's default variables_order=GPCS leaves $_ENV empty in CLI,
+          # so DB_* / APP_KEY set via the workflow `env:` block are only
+          # reachable through getenv()/$_SERVER. The app and tests read
+          # $_ENV['DB_*'] ?? '...' directly, so populate $_ENV by enabling
+          # the "E" in variables_order.
+          ini-values: variables_order=EGPCS
       - name: Install Composer dependencies
         working-directory: backend
         run: composer install --no-interaction --no-progress
